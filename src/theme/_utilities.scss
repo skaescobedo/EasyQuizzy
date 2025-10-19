@@ -1,0 +1,4 @@
+[data-theme="dark"] img.invert-on-dark {
+    filter: invert(1);
+    transition: filter 0.3s ease;
+}

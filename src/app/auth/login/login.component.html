@@ -1,0 +1,101 @@
+<div class="sides-container">
+  <!-- LEFT: Unirse con código -->
+  <div class="left-side">
+    <h2>Unirse como participante</h2>
+    <p>No necesitas cuenta</p>
+
+    <div class="join-box">
+      <input type="text" placeholder="# Ingresa el código del quiz" />
+      <button class="cursor-pointer">
+        <mat-icon fontIcon="arrow_forward"></mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- RIGHT: Login form -->
+  <div class="right-side">
+    <div class="box-container">
+      <div class="box">
+        <div class="flex justify-center items-center mb-8">
+          <img src="assets/logo-full.png" alt="EasyQuizzy" class="h-30 md:h-36" />
+        </div>
+
+        <h2 class="mb-6">Bienvenido de nuevo</h2>
+        <p class="subtitle">Inicia sesión en tu cuenta de EasyQuizzy</p>
+
+        <!-- Mensaje de error global -->
+        @if (errorMessage()) {
+          <div class="mt-4"></div>
+          <app-error [message]="errorMessage() | errorMessage"></app-error>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="mt-4 space-y-3">
+          <!-- Email -->
+          <div class="relative">
+            <input
+              formControlName="email"
+              type="email"
+              placeholder="Correo electrónico"
+              class="input"
+              [class.border-red-400]="f.email.touched && f.email.invalid"
+            />
+            @if (f.email.touched && f.email.invalid) {
+              <p class="text-sm text-red-500 mt-1">
+                @if (f.email.errors?.['required']) { El correo es obligatorio. }
+                @else if (f.email.errors?.['email']) { Ingresa un correo válido. }
+              </p>
+            }
+          </div>
+
+          <!-- Contraseña -->
+          <div class="relative">
+            <input
+              formControlName="password"
+              type="password"
+              placeholder="Contraseña"
+              class="input"
+              [class.border-red-400]="f.password.touched && f.password.invalid"
+            />
+            @if (f.password.touched && f.password.invalid) {
+              <p class="text-sm text-red-500 mt-1">
+                @if (f.password.errors?.['required']) { La contraseña es obligatoria. }
+                @else if (f.password.errors?.['minlength']) { Debe tener al menos 6 caracteres. }
+              </p>
+            }
+          </div>
+
+          <!-- Link forgot password -->
+          <div class="text-right py-2">
+            <a routerLink="/auth/forgot-password" class="link">¿Olvidaste tu contraseña?</a>
+          </div>
+
+          <!-- Botón principal -->
+          <button type="submit" class="btn btn--primary mt-2" [disabled]="loading()">
+            @if (loading()) {
+              <span>Cargando...</span>
+            } @else {
+              <span>Iniciar sesión</span>
+            }
+          </button>
+        </form>
+
+        <p class="text-center mt-4">
+          ¿No tienes una cuenta?
+          <a routerLink="/auth/register" class="link">Regístrate</a>
+        </p>
+
+        <button
+          type="button"
+          class="w-full flex items-center justify-center gap-2 my-3 bg-white border border-gray-300 py-2.5 rounded-full text-gray-800 hover:bg-gray-100 transition"
+        >
+          <img
+            class="h-4 w-4"
+            src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/login/googleFavicon.png"
+            alt="googleFavicon"
+          />
+          Iniciar sesión con Google
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

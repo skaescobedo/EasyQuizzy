@@ -1,0 +1,60 @@
+<div class="min-h-screen flex items-center justify-center bg-[var(--color-bg)] text-[var(--color-text)] px-4">
+  <div
+    class="max-w-md w-full bg-[var(--color-bg)] border border-[var(--color-border)] p-6 md:p-8 rounded-2xl shadow-[0_0_10px_0_var(--color-shadow)]"
+  >
+    <div class="flex justify-center items-center mb-4">
+      <img src="assets/logo-full.png" alt="EasyQuizzy" class="h-40 object-contain" />
+    </div>
+
+    <h2 class="text-center mb-2">Verifica tu correo</h2>
+    <p class="subtitle text-center mb-6">
+      Te enviamos un código de verificación a <strong>{{ email() }}</strong>.
+    </p>
+
+    @if (errorMessage()) {
+      <app-error [message]="errorMessage() | errorMessage"></app-error>
+    }
+
+    @if (successMessage()) {
+      <div
+        class="flex items-center gap-3 p-3 rounded-lg bg-green-100 text-green-700 border border-green-300 mb-4 text-sm"
+      >
+        <mat-icon fontIcon="check_circle" class="text-green-600"></mat-icon>
+        <span>{{ successMessage() }}</span>
+      </div>
+    }
+
+    <form [formGroup]="verifyForm" (ngSubmit)="onVerify()">
+      <input
+        formControlName="code"
+        type="text"
+        maxlength="6"
+        placeholder="Código de verificación"
+        class="input my-3 text-center font-semibold"
+        [class.border-red-400]="v.code.touched && v.code.invalid"
+      />
+      @if (v.code.touched && v.code.invalid) {
+        <p class="text-sm text-red-500 mt-1 text-center">
+          @if (v.code.errors?.['required']) { Ingresa el código enviado. }
+          @else if (v.code.errors?.['minlength']) { Debe tener 6 dígitos. }
+        </p>
+      }
+
+      <button type="submit" class="btn btn--primary mt-4 w-full" [disabled]="loading()">
+        @if (loading()) { <span>Verificando...</span> } @else { <span>Verificar código</span> }
+      </button>
+    </form>
+
+    <p class="text-center mt-6">
+      ¿No recibiste el código?
+      <button
+        type="button"
+        class="link text-[var(--color-primary-hover)] underline"
+        (click)="onResend()"
+        [disabled]="loading()"
+      >
+        Reenviar
+      </button>
+    </p>
+  </div>
+</div>

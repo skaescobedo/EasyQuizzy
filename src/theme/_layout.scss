@@ -1,0 +1,86 @@
+// theme/_layout.scss
+.sides-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.left-side {
+    background-color: var(--color-primary);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+
+    h2 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    p {
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 1rem;
+    }
+
+    .join-box {
+        display: flex;
+        align-items: center;
+        background: white;
+        border-radius: 9999px;
+        padding: 0.5rem;
+        width: 100%;
+        max-width: 320px;
+
+        input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            padding: 0.75rem 1rem;
+            color: #111;
+            border-radius: 9999px;
+        }
+
+        button {
+            background-color: var(--color-primary);
+            border: none;
+            border-radius: 9999px;
+            width: 42px;
+            height: 42px;
+            color: white;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+}
+
+.right-side {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-bg);
+    padding: 2rem;
+}
+
+
+.box {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    width: 100%;
+    max-width: 380px;
+    border-radius: 1rem;
+    box-shadow: 0 0 10px var(--color-shadow);
+    padding: 2rem;
+    text-align: center;
+}

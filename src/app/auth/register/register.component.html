@@ -1,0 +1,89 @@
+<div class="min-h-screen flex items-center justify-center bg-[var(--color-bg)] text-[var(--color-text)] px-4">
+  <div
+    class="max-w-md w-full bg-[var(--color-bg)] border border-[var(--color-border)] p-6 md:p-8 rounded-2xl shadow-[0_0_10px_0_var(--color-shadow)]"
+  >
+    <div class="flex justify-center items-center mb-4">
+      <img src="assets/logo-full.png" alt="EasyQuizzy" class="h-40 object-contain" />
+    </div>
+
+    <h2 class="text-center mb-4">Crear una cuenta</h2>
+    <p class="subtitle text-center mb-6">
+      Únete a EasyQuizzy y crea quizzes interactivos
+    </p>
+
+    @if (errorMessage()) {
+      <app-error [message]="errorMessage() | errorMessage"></app-error>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <!-- Nombre -->
+      <div>
+        <input
+          formControlName="full_name"
+          type="text"
+          placeholder="Nombre completo"
+          class="input my-3"
+          [class.border-red-400]="f.full_name.touched && f.full_name.invalid"
+        />
+        @if (f.full_name.touched && f.full_name.invalid) {
+          <p class="text-sm text-red-500 mt-1">
+            @if (f.full_name.errors?.['required']) { El nombre es obligatorio. }
+            @else if (f.full_name.errors?.['minlength']) { Debe tener al menos 3 caracteres. }
+          </p>
+        }
+      </div>
+
+      <!-- Correo -->
+      <div>
+        <input
+          formControlName="email"
+          type="email"
+          placeholder="Correo electrónico"
+          class="input my-3"
+          [class.border-red-400]="f.email.touched && f.email.invalid"
+        />
+        @if (f.email.touched && f.email.invalid) {
+          <p class="text-sm text-red-500 mt-1">
+            @if (f.email.errors?.['required']) { El correo es obligatorio. }
+            @else if (f.email.errors?.['email']) { Ingresa un correo válido. }
+          </p>
+        }
+      </div>
+
+      <!-- Contraseña -->
+      <div>
+        <input
+          formControlName="password"
+          type="password"
+          placeholder="Contraseña"
+          class="input my-3"
+          [class.border-red-400]="f.password.touched && f.password.invalid"
+        />
+        @if (f.password.touched && f.password.invalid) {
+          <p class="text-sm text-red-500 mt-1">
+            @if (f.password.errors?.['required']) { La contraseña es obligatoria. }
+            @else if (f.password.errors?.['minlength']) { Debe tener al menos 6 caracteres. }
+          </p>
+        }
+      </div>
+
+      <button type="submit" class="btn btn--primary mt-4 w-full" [disabled]="loading()">
+        @if (loading()) { <span>Creando cuenta...</span> } @else { <span>Registrarse</span> }
+      </button>
+    </form>
+
+    <p class="text-center mt-4">
+      ¿Ya tienes cuenta?
+      <a routerLink="/auth/login" class="link">Inicia sesión</a>
+    </p>
+
+    <button type="button" class="btn btn--google my-3">
+      <img
+        class="h-4 w-4"
+        src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/login/googleFavicon.png"
+        alt="googleFavicon"
+      />
+      Registrarse con Google
+    </button>
+  </div>
+</div>

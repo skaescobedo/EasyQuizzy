@@ -1,0 +1,201 @@
+<app-header />
+
+<!-- 🌟 HERO SECTION (Gradiente azul → blanco) -->
+<section
+  class="min-h-[90vh] flex flex-col items-center justify-center text-center px-6 
+  bg-gradient-to-b from-[var(--color-primary)] via-[#3b82f615] to-[var(--color-bg)] text-[var(--color-text)]"
+>
+  <img src="assets/logo-full.png" alt="EasyQuizzy" class="h-36 md:h-40 mb-6" />
+  <h1 class="text-4xl md:text-5xl font-bold mb-4 text-[var(--color-text)]">
+    Crea, comparte y analiza
+    <span class="text-[var(--color-primary-hover)]">quizzes inteligentes</span>
+  </h1>
+
+  <p class="max-w-2xl text-[var(--color-muted)] mb-10">
+    EasyQuizzy es tu plataforma todo en uno para crear quizzes interactivos, recopilar resultados
+    y aprender de manera divertida e inteligente.
+  </p>
+
+  <!-- 🔹 Unirse como participante -->
+  <div class="flex flex-col sm:flex-row justify-center items-center gap-30 w-full max-w-4xl">
+    <div class="flex flex-col items-center gap-3 mb-8">
+      <p class="subtitle">¿Unirte como participante?</p>
+      <div class="flex flex-col sm:flex-row items-center gap-3">
+          <input
+            type="text"
+            placeholder="# Código del quiz"
+            class="input max-w-sm"
+            style="width:9rem !important;"
+          />
+        <button class="btn btn--primary sm:w-auto">Unirse</button>
+      </div>
+    </div>
+
+    <!-- 🔹 Crear quiz -->
+    <div class="flex flex-col items-center gap-3 mb-8">
+
+      <p class="subtitle mb-1">¿Hostear un nuevo quiz?</p>
+      <button
+        class="btn btn--primary sm:w-auto"
+      >
+        Crear mi primer quiz
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- 💡 FEATURES SECTION (Fondo claro) -->
+<section class="py-20 bg-[var(--color-bg)] text-[var(--color-text)] px-6">
+  <div class="text-center mb-12">
+    <h2 class="text-3xl font-semibold mb-2">Descubre lo que puedes hacer con EasyQuizzy</h2>
+    <p class="subtitle max-w-2xl mx-auto">
+      Explora todas las funciones diseñadas para mejorar tus actividades, evaluaciones o dinámicas de grupo.
+    </p>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+    <div class="p-6 border border-[var(--color-border)] rounded-2xl shadow-[0_2px_10px_var(--color-shadow)] bg-[var(--color-bg-secondary)]">
+      <h3 class="font-semibold text-lg text-[var(--color-primary)] mb-2">Quizzes interactivos</h3>
+      <p class="text-[var(--color-muted)] text-sm">
+        Crea quizzes con preguntas dinámicas, imágenes y temporizador.
+      </p>
+    </div>
+
+    <div class="p-6 border border-[var(--color-border)] rounded-2xl shadow-[0_2px_10px_var(--color-shadow)] bg-[var(--color-bg-secondary)]">
+      <h3 class="font-semibold text-lg text-[var(--color-primary)] mb-2">Resultados automáticos</h3>
+      <p class="text-[var(--color-muted)] text-sm">
+        Analiza estadísticas en tiempo real y obtén reportes instantáneos.
+      </p>
+    </div>
+
+    <div class="p-6 border border-[var(--color-border)] rounded-2xl shadow-[0_2px_10px_var(--color-shadow)] bg-[var(--color-bg-secondary)]">
+      <h3 class="font-semibold text-lg text-[var(--color-primary)] mb-2">Modo colaborativo</h3>
+      <p class="text-[var(--color-muted)] text-sm">
+        Permite que tus participantes creen y compartan sus propios quizzes.
+      </p>
+    </div>
+
+    <div class="p-6 border border-[var(--color-border)] rounded-2xl shadow-[0_2px_10px_var(--color-shadow)] bg-[var(--color-bg-secondary)]">
+      <h3 class="font-semibold text-lg text-[var(--color-primary)] mb-2">Inteligencia Artificial</h3>
+      <p class="text-[var(--color-muted)] text-sm">
+        Genera preguntas automáticas y analiza el rendimiento de los usuarios.
+      </p>
+    </div>
+
+    <div class="p-6 border border-[var(--color-border)] rounded-2xl shadow-[0_2px_10px_var(--color-shadow)] bg-[var(--color-bg-secondary)]">
+      <h3 class="font-semibold text-lg text-[var(--color-primary)] mb-2">Personalización total</h3>
+      <p class="text-[var(--color-muted)] text-sm">
+        Cambia colores, temas, dificultad y categorías fácilmente.
+      </p>
+    </div>
+
+    <div class="p-6 border border-[var(--color-border)] rounded-2xl shadow-[0_2px_10px_var(--color-shadow)] bg-[var(--color-bg-secondary)]">
+      <h3 class="font-semibold text-lg text-[var(--color-primary)] mb-2">Integración simple</h3>
+      <p class="text-[var(--color-muted)] text-sm">
+        Conecta EasyQuizzy con tus plataformas favoritas de enseñanza o trabajo.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ⚙️ HOW IT WORKS -->
+<section class="py-20 text-[var(--color-text)] bg-[var(--color-bg-secondary)] px-6">
+  <div class="text-center mb-12">
+    <h2 class="text-3xl font-semibold mb-2">¿Cómo funciona?</h2>
+    <p class="subtitle max-w-2xl mx-auto">
+      Comienza con EasyQuizzy en tres simples pasos.
+    </p>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-10 max-w-6xl mx-auto text-center">
+    <div>
+      <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center font-bold">1</div>
+      <h3 class="font-semibold text-lg mb-2">Crea tu quiz</h3>
+      <p class="text-[var(--color-muted)] text-sm">
+        Diseña tu quiz agregando preguntas, respuestas e imágenes fácilmente.
+      </p>
+    </div>
+
+    <div>
+      <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center font-bold">2</div>
+      <h3 class="font-semibold text-lg mb-2">Comparte el código</h3>
+      <p class="text-[var(--color-muted)] text-sm">
+        Envía el código de acceso a tus estudiantes o colegas.
+      </p>
+    </div>
+
+    <div>
+      <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center font-bold">3</div>
+      <h3 class="font-semibold text-lg mb-2">Analiza los resultados</h3>
+      <p class="text-[var(--color-muted)] text-sm">
+        Consulta los resultados y métricas de desempeño en tiempo real.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ❓ PREGUNTAS FRECUENTES -->
+<section class="py-20 bg-[var(--color-bg)] text-[var(--color-text)] px-6 ">
+  <div class="text-center mb-12">
+    <h2 class="text-3xl font-semibold mb-2">Preguntas frecuentes</h2>
+    <p class="subtitle max-w-2xl mx-auto">
+      Encuentra respuestas a las preguntas más comunes sobre EasyQuizzy
+    </p>
+  </div>
+
+  <div class="max-w-3xl mx-auto space-y-4">
+    <details class="border border-[var(--color-border)] rounded-xl p-4 shadow-[0_2px_6px_var(--color-shadow)] bg-[var(--color-bg-secondary)]">
+      <summary class="cursor-pointer font-medium text-lg">¿Qué tipo de contenido puedo crear con EasyQuizzy?</summary>
+      <p class="mt-2 text-[var(--color-muted)] text-sm">
+        Puedes crear quizzes personalizados para enseñanza, evaluación o entretenimiento. Agrega preguntas de opción múltiple,
+        imágenes, temporizadores y análisis automáticos.
+      </p>
+    </details>
+
+    <details class="border border-[var(--color-border)] rounded-xl p-4 shadow-[0_2px_6px_var(--color-shadow)] bg-[var(--color-bg-secondary)]">
+      <summary class="cursor-pointer font-medium text-lg">¿Puedo añadir imágenes o videos a las preguntas?</summary>
+      <p class="mt-2 text-[var(--color-muted)] text-sm">
+        Sí. EasyQuizzy permite adjuntar imágenes o enlaces de video para hacer tus quizzes más visuales e interactivos.
+      </p>
+    </details>
+
+    <details class="border border-[var(--color-border)] rounded-xl p-4 shadow-[0_2px_6px_var(--color-shadow)] bg-[var(--color-bg-secondary)]">
+      <summary class="cursor-pointer font-medium text-lg">¿Los participantes necesitan una cuenta para unirse?</summary>
+      <p class="mt-2 text-[var(--color-muted)] text-sm">
+        No, solo necesitan el código del quiz. Sin embargo, si se registran, podrán guardar su progreso y estadísticas.
+      </p>
+    </details>
+
+    <details class="border border-[var(--color-border)] rounded-xl p-4 shadow-[0_2px_6px_var(--color-shadow)] bg-[var(--color-bg-secondary)]">
+      <summary class="cursor-pointer font-medium text-lg">¿Necesito instalar algo o funciona desde el navegador?</summary>
+      <p class="mt-2 text-[var(--color-muted)] text-sm">
+        No necesitas instalar nada. EasyQuizzy funciona completamente desde tu navegador web.
+      </p>
+    </details>
+
+    <details class="border border-[var(--color-border)] rounded-xl p-4 shadow-[0_2px_6px_var(--color-shadow)] bg-[var(--color-bg-secondary)]">
+      <summary class="cursor-pointer font-medium text-lg">¿Puedo exportar los resultados de mis quizzes?</summary>
+      <p class="mt-2 text-[var(--color-muted)] text-sm">
+        Sí, puedes descargar tus resultados en formatos como Excel o CSV para análisis posterior.
+      </p>
+    </details>
+  </div>
+</section>
+
+<!-- 🚀 CTA FINAL -->
+<section class="py-20 text-center bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] text-white px-6">
+  <h2 class="text-2xl md:text-3xl font-semibold mb-4">
+    ¿Listo para empezar a crear con <span class="font-bold">EasyQuizzy</span>?
+  </h2>
+  <p class="max-w-2xl mx-auto text-white/90 mb-8">
+    Únete a miles de estudiantes, docentes y creadores que ya están transformando su manera de aprender e interactuar.
+  </p>
+  <button routerLink="/auth/register" class="cursor-pointer bg-white text-[var(--color-primary)] font-semibold px-8 py-3 rounded-full hover:opacity-90 transition">
+    Regístrate gratis ahora
+  </button>
+</section>
+
+
+<!-- 📞 FOOTER -->
+<app-footer />

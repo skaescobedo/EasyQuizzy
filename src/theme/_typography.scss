@@ -1,0 +1,19 @@
+h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+}
+
+.subtitle {
+    color: var(--color-muted);
+    font-size: 0.9rem;
+}
+
+.link {
+    color: var(--color-primary);
+    text-decoration: underline;
+    transition: color 0.2s;
+
+    &:hover {
+        color: var(--color-primary-hover);
+    }
+}
