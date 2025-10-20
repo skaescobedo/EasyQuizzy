@@ -1,48 +1,63 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
+import { catchError, of } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
+import { ErrorAlertComponent } from '../../shared/error/error.component';
+import { ErrorMessagePipe } from '../../shared/pipes/errorMessage.pipe';
 
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  template: `
-    <div class="min-h-screen flex items-center justify-center bg-[var(--color-bg)] text-[var(--color-text)] px-4">
-      <div class="max-w-md w-full bg-[var(--color-bg)] border border-[var(--color-border)] p-6 md:p-8 rounded-2xl shadow-[0_0_10px_0_var(--color-shadow)]">
-        
-        <div class="flex justify-center items-center mb-6">
-          <img src="assets/logo-full.png" alt="EasyQuizzy" class="h-30 md:h-40 object-contain" />
-        </div>
-
-        <h2 class="text-center mb-2">¿Olvidaste tu contraseña?</h2>
-        <p class="subtitle text-center mb-6">
-          Te enviaremos un código para restablecer tu contraseña
-        </p>
-
-        <form (ngSubmit)="onSubmit()">
-          <input
-            name="email"
-            type="email"
-            placeholder="Correo electrónico"
-            class="input my-3"
-            required
-          />
-
-          <button type="submit" class="btn btn--primary mt-4">
-            Enviar código
-          </button>
-        </form>
-
-        <div class="text-center mt-6">
-          <a routerLink="/auth/login" class="link">
-            Volver al inicio de sesión
-          </a>
-        </div>
-      </div>
-    </div>
-  `
+  imports: [ReactiveFormsModule, CommonModule, RouterModule, ErrorAlertComponent, ErrorMessagePipe],
+  templateUrl: './forgot-password.component.html',
 })
 export class ForgotPasswordComponent {
+  private fb = inject(FormBuilder);
+  private auth = inject(AuthService);
+  private router = inject(Router);
+
   loading = signal(false);
+  errorMessage = signal<string | null>(null);
+  successMessage = signal<string | null>(null);
+
+  form = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
+  });
+
+  get f() {
+    return this.form.controls;
+  }
+
   onSubmit() {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
     this.loading.set(true);
-    // TODO: enviar solicitud de recuperación
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    const email = this.form.value.email!;
+
+    this.auth
+      .requestPasswordReset(email)
+      .pipe(
+        catchError((err) => {
+          this.errorMessage.set(err);
+          this.loading.set(false);
+          return of(null);
+        })
+      )
+      .subscribe((res) => {
+        if (!res) return;
+        this.loading.set(false);
+        this.successMessage.set('Código enviado a tu correo');
+        this.router.navigate(['/auth/reset-password'], {
+          queryParams: { email },
+        });
+      });
   }
 }

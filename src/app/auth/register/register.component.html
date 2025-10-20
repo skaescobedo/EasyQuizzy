@@ -26,7 +26,7 @@
           [class.border-red-400]="f.full_name.touched && f.full_name.invalid"
         />
         @if (f.full_name.touched && f.full_name.invalid) {
-          <p class="text-sm text-red-500 mt-1">
+          <p class="error-text">
             @if (f.full_name.errors?.['required']) { El nombre es obligatorio. }
             @else if (f.full_name.errors?.['minlength']) { Debe tener al menos 3 caracteres. }
           </p>
@@ -43,7 +43,7 @@
           [class.border-red-400]="f.email.touched && f.email.invalid"
         />
         @if (f.email.touched && f.email.invalid) {
-          <p class="text-sm text-red-500 mt-1">
+          <p class="error-text">
             @if (f.email.errors?.['required']) { El correo es obligatorio. }
             @else if (f.email.errors?.['email']) { Ingresa un correo válido. }
           </p>
@@ -60,7 +60,7 @@
           [class.border-red-400]="f.password.touched && f.password.invalid"
         />
         @if (f.password.touched && f.password.invalid) {
-          <p class="text-sm text-red-500 mt-1">
+          <p class="error-text">
             @if (f.password.errors?.['required']) { La contraseña es obligatoria. }
             @else if (f.password.errors?.['minlength']) { Debe tener al menos 6 caracteres. }
           </p>
@@ -74,16 +74,15 @@
 
     <p class="text-center mt-4">
       ¿Ya tienes cuenta?
-      <a routerLink="/auth/login" class="link">Inicia sesión</a>
+      <a
+        routerLink="/auth/login"
+        class="link text-[var(--color-primary-hover)] font-medium cursor-pointer hover:underline transition"
+      >
+        Inicia sesión
+      </a>
     </p>
 
-    <button type="button" class="btn btn--google my-3">
-      <img
-        class="h-4 w-4"
-        src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/login/googleFavicon.png"
-        alt="googleFavicon"
-      />
-      Registrarse con Google
-    </button>
+    <div id="googleButton" class="flex justify-center my-3 w-full"></div>
+
   </div>
 </div>

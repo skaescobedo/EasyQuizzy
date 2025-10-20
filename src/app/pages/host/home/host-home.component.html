@@ -1,0 +1,29 @@
+ <div class="flex flex-col md:flex-row gap-6 justify-center items-center mt-10">
+  <!-- 🟢 Crear Quiz -->
+  <div
+    class="w-full md:w-96 bg-[var(--color-bg)] border border-[var(--color-border)]
+           rounded-2xl shadow-[0_0_10px_0_var(--color-shadow)] p-6 text-center transition hover:shadow-lg"
+  >
+    <img src="assets/create-quiz.png" alt="Crear Quiz" class="h-28 mx-auto mb-4 rounded-lg" />
+    <h3 class="text-lg font-semibold mb-2">Crear un nuevo Quiz</h3>
+    <p class="text-[var(--color-muted)] mb-4">
+      Diseña quizzes interactivos y genera preguntas automáticamente con IA.
+    </p>
+    <button routerLink="/host/create" class="btn btn--primary w-full">Crear Quiz</button>
+  </div>
+
+  <!-- 🟣 Ver Mis Quizzes -->
+  <div
+    class="w-full md:w-96 bg-[var(--color-bg)] border border-[var(--color-border)]
+           rounded-2xl shadow-[0_0_10px_0_var(--color-shadow)] p-6 text-center transition hover:shadow-lg"
+  >
+    <img src="assets/my-quizzes.png" alt="Mis Quizzes" class="h-28 mx-auto mb-4 rounded-lg" />
+    <h3 class="text-lg font-semibold mb-2">Ver mis Quizzes</h3>
+    <p class="text-[var(--color-muted)] mb-4">
+      Consulta, edita o comparte tus quizzes guardados fácilmente.
+    </p>
+    <button routerLink="/host/quizzes" class="btn btn--primary w-full">Ver Quizzes</button>
+  </div>
+</div>
+
+

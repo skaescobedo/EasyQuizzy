@@ -134,11 +134,11 @@ export class AuthService {
     localStorage.clear();
     this.isAuthenticated.set(false);
     this.currentUser.set(null);
-    this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+    this.router.navigateByUrl('/', { replaceUrl: true });
   }
 
   /** Obtener token actual */
-  getAccessToken(): string | null {
-    return localStorage.getItem(this.accessTokenKey);
+  getAccessToken(): Promise<string | null> {
+    return Promise.resolve(localStorage.getItem('access_token'));
   }
 }

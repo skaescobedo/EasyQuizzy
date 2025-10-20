@@ -17,3 +17,17 @@ h2 {
         color: var(--color-primary-hover);
     }
 }
+
+.success-text {
+    color: var(--color-success);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    text-align: left;
+}
+
+.error-text {
+    color: var(--color-danger);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    text-align: left;
+}

@@ -1,26 +1,35 @@
-import { Component, inject, signal } from '@angular/core';
+import { afterNextRender, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { MatIconModule } from '@angular/material/icon';
 import { catchError, of } from 'rxjs';
 import { ErrorMessagePipe } from '../../shared/pipes/errorMessage.pipe';
 import { ErrorAlertComponent } from '../../shared/error/error.component';
+import { GoogleAuthService } from '../../services/google-auth.service';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, MatIconModule, ErrorMessagePipe, ErrorAlertComponent],
+  imports: [ReactiveFormsModule, CommonModule, MatIconModule, ErrorMessagePipe, ErrorAlertComponent, RouterLink],
   templateUrl: './register.component.html',
 })
 export class RegisterComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
+  private googleAuth = inject(GoogleAuthService);
   private router = inject(Router);
 
   loading = signal(false);
   errorMessage = signal<string | null>(null);
+
+  constructor() {
+    // ✅ Espera que el DOM esté listo para renderizar el botón
+    afterNextRender(() => {
+      this.googleAuth.initGoogleButton('googleButton');
+    });
+  }
 
   /** Formulario de registro */
   form = this.fb.group({

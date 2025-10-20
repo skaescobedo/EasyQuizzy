@@ -11,7 +11,7 @@ import { AuthService } from '../../services/auth.service';
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
 
-  const excludedUrls = ['/auth/login', '/auth/refresh', '/auth/logout', '/auth/register', '/auth/verify-email', '/auth/forgot-password', '/auth/reset-password'];
+  const excludedUrls = ['/auth/login', '/auth/refresh', '/auth/register', '/auth/verify-email', '/auth/forgot-password', '/auth/reset-password'];
   if (excludedUrls.some(url => request.url.includes(url))) {
     return next(request); // sin token ni retry
   }
@@ -20,6 +20,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     switchMap((access) => {
 
       if (access) {
+        console.log('🟢 Añadiendo token a', request.url);
         request = request.clone({
           setHeaders: { Authorization: `Bearer ${access}` }
         });
