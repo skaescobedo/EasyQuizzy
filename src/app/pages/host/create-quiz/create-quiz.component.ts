@@ -51,27 +51,29 @@ export class CreateQuizComponent {
 
   removeCategory(i: number) {
     this.categories.removeAt(i);
+    // Reordenamos order_index para mantener 1..n
+    this.categories.controls.forEach((ctrl, idx) => ctrl.get('order_index')?.setValue(idx + 1));
   }
 
   // === Preguntas ===
-addQuestion() {
-  this.questions.push(
-    this.fb.group({
-      question_text: ['', Validators.required],
-      question_type: ['multiple_choice', Validators.required],
-      explanation: [''],
-      correct_text: [''],
-      has_time_limit: [false], // 👈 nuevo campo
-      time_limit_sec: [null],
-      category_name: [''],
-      answers: this.fb.array([
-        this.fb.group({ answer_text: ['Opción 1'], is_correct: [false] }),
-        this.fb.group({ answer_text: ['Opción 2'], is_correct: [false] }),
-      ]),
-      image: [null],
-    })
-  );
-}
+  addQuestion() {
+    this.questions.push(
+      this.fb.group({
+        question_text: ['', Validators.required],
+        question_type: ['multiple_choice', Validators.required],
+        explanation: [''],
+        correct_text: [''],
+        has_time_limit: [false],
+        time_limit_sec: [null],
+        category_name: [''],
+        answers: this.fb.array([
+          this.fb.group({ answer_text: ['Opción 1', Validators.required], is_correct: [false] }),
+          this.fb.group({ answer_text: ['Opción 2', Validators.required], is_correct: [false] }),
+        ]),
+        image: [null], // solo a nivel UI
+      })
+    );
+  }
 
   removeQuestion(i: number) {
     this.questions.removeAt(i);
@@ -82,11 +84,19 @@ addQuestion() {
   }
 
   addAnswer(i: number) {
-    this.getAnswers(i).push(this.fb.group({ answer_text: [''], is_correct: [false] }));
+    this.getAnswers(i).push(this.fb.group({ answer_text: ['', Validators.required], is_correct: [false] }));
   }
 
   removeAnswer(i: number, j: number) {
     this.getAnswers(i).removeAt(j);
+  }
+
+  toggleTimeLimit(i: number) {
+    const q = this.questions.at(i);
+    const has = q.get('has_time_limit')?.value;
+    if (!has) {
+      q.get('time_limit_sec')?.setValue(null);
+    }
   }
 
   onFileSelected(event: any, i: number) {
@@ -105,34 +115,45 @@ addQuestion() {
     this.error.set(null);
 
     try {
-      const data = this.quizForm.getRawValue() as any;
+      const raw = this.quizForm.getRawValue() as any;
 
-      const categories = (data.categories ?? []).map((c: any, idx: number) => ({
-        ...c,
+      // Categorías con order_index 1..n
+      const categories = (raw.categories ?? []).map((c: any, idx: number) => ({
+        name: c.name,
+        weight: c.weight,
         order_index: idx + 1,
+        is_active: c.is_active ?? true,
       }));
 
-      const questions = (data.questions ?? []).map((q: any, idx: number) => ({
-        ...q,
+      // Preguntas saneadas para el JSON (sin 'image' ni 'has_time_limit')
+      const questions = (raw.questions ?? []).map((q: any, idx: number) => ({
+        question_text: q.question_text,
+        question_type: q.question_type,
+        explanation: q.explanation || null,
+        correct_text: q.correct_text || null,
+        time_limit_sec: q.has_time_limit ? q.time_limit_sec : null,
+        category_name: q.category_name || null,
         order_index: idx + 1,
         answers: (q.answers ?? []).map((a: any, j: number) => ({
-          ...a,
+          answer_text: a.answer_text,
+          is_correct: !!a.is_correct,
           order_index: j + 1,
         })),
       }));
 
-      const images: File[] = (data.questions ?? [])
-        .filter((q: any) => q?.image)
-        .map((q: any) => q.image as File);
+      // Imágenes: nombradas por order_index de la pregunta (requisito del backend)
+      const imagesByIndex: { index: number; file: File }[] = (raw.questions ?? [])
+        .map((q: any, idx: number) => (q?.image ? { index: idx + 1, file: q.image as File } : null))
+        .filter((x: any) => !!x);
 
       await this.quizService.createQuiz(
         {
-          title: data.title!,
-          description: data.description!,
+          title: raw.title!,
+          description: raw.description || '',
           categories,
           questions,
         },
-        images
+        imagesByIndex
       );
 
       this.success.set(true);

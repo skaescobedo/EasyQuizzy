@@ -6,10 +6,10 @@ import { environment } from '../../environment/environment';
 export interface QuizQuestion {
   question_text: string;
   question_type: string;
-  explanation?: string;
-  correct_text?: string;
+  explanation?: string | null;
+  correct_text?: string | null;
   time_limit_sec?: number | null;
-  category_name?: string;
+  category_name?: string | null;
   order_index: number;
   answers: {
     answer_text: string;
@@ -29,19 +29,20 @@ export interface QuizPayload {
 export class QuizService {
   private http = inject(HttpClient);
 
-  async createQuiz(data: QuizPayload, images: File[]): Promise<any> {
+  // imagesByIndex: [{ index: order_index_de_la_pregunta, file }]
+  async createQuiz(data: QuizPayload, imagesByIndex: { index: number; file: File }[]): Promise<any> {
     const formData = new FormData();
 
     // JSON principal
     formData.append('quiz_data', JSON.stringify(data));
 
-    // Archivos
-    images.forEach((img, idx) => {
-      const filename = `${idx + 1}.${img.name.split('.').pop()}`;
-      formData.append('images', img, filename);
+    // Archivos nombrados con el order_index (como requiere el backend)
+    imagesByIndex.forEach(({ index, file }) => {
+      const ext = file.name.includes('.') ? file.name.split('.').pop() : 'png';
+      const filename = `${index}.${ext}`;
+      formData.append('images', file, filename);
     });
 
-    // Request
     const result$ = this.http.post(`${environment.apiUrl}/quizzes/`, formData);
     return await lastValueFrom(result$);
   }
