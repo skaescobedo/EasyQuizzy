@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { environment } from '../../environment/environment';
 
@@ -25,29 +25,50 @@ export interface QuizPayload {
   questions: QuizQuestion[];
 }
 
+export interface QuizListItem {
+  quiz_id: number;
+  title: string;
+  description?: string | null;
+  is_public: boolean;
+  created_at: string;         // ISO string desde FastAPI
+  category_count: number;
+  question_count: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class QuizService {
   private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/quizzes`;
 
-  // Acepta [{index, file}] para nombrar bien según order_index
+  // 🆕 Listado del usuario autenticado
+  async listMyQuizzes(limit = 12, offset = 0): Promise<QuizListItem[]> {
+    const params = new HttpParams()
+      .set('limit', limit)
+      .set('offset', offset);
+
+    const obs$ = this.http.get<QuizListItem[]>(this.base, { params });
+    return await lastValueFrom(obs$);
+  }
+
+  // Crear quiz (con imágenes indexadas por order_index)
   async createQuiz(
     data: QuizPayload,
     images: { index: number; file: File }[]
   ): Promise<any> {
     const formData = new FormData();
 
-    // JSON principal
     formData.append('quiz_data', JSON.stringify(data));
 
-    // Archivos: nombre = <order_index>.<ext>
     for (const { index, file } of images) {
-      const ext = file.name.includes('.') ? file.name.split('.').pop() : 'png';
+      const ext = file.name.includes('.') ? file.name.split('.').pop()! : 'png';
       const filename = `${index}.${ext}`;
       formData.append('images', file, filename);
     }
 
-    // Request
-    const result$ = this.http.post(`${environment.apiUrl}/quizzes/`, formData);
+    const result$ = this.http.post(this.base + '/', formData);
     return await lastValueFrom(result$);
   }
+
+  // (opcional futuro) detalle:
+  // async getQuiz(id: number) { return await lastValueFrom(this.http.get(`${this.base}/${id}`)); }
 }

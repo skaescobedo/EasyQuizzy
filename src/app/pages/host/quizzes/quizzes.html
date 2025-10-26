@@ -1,0 +1,73 @@
+<section class="max-w-6xl mx-auto p-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold">Mis Quizzes</h1>
+      <p class="text-[var(--color-muted)]">Lista de quizzes creados por ti.</p>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="mt-6 p-4 border border-[var(--color-border)] rounded-xl text-[var(--color-danger)]">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Vacío -->
+  @if (!loading() && items().length === 0 && !error()) {
+    <div class="mt-10 text-center text-[var(--color-muted)]">
+      <img src="assets/my-quizzes.png" alt="Sin quizzes" class="h-28 mx-auto mb-4 opacity-75" />
+      <p>No tienes quizzes todavía.</p>
+    </div>
+  }
+
+  <!-- Grid -->
+  <div class="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+    @for (q of items(); track trackById) {
+      <a
+        class="block bg-[var(--color-bg)] border border-[var(--color-border)] rounded-2xl p-4 hover:shadow-lg transition"
+        [routerLink]="['/host/quizzes', q.quiz_id]"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <h3 class="text-lg font-semibold line-clamp-2">{{ q.title }}</h3>
+
+          <span
+            class="text-xs px-2 py-1 rounded-full border"
+            [class]="q.is_public ? 'border-green-500 text-green-600' : 'border-[var(--color-border)] text-[var(--color-muted)]'"
+          >
+            {{ q.is_public ? 'Público' : 'Privado' }}
+          </span>
+        </div>
+
+        @if (q.description) {
+          <p class="mt-1 text-[var(--color-muted)] line-clamp-2">
+            {{ q.description }}
+          </p>
+        }
+
+        <div class="mt-4 flex items-center gap-4 text-sm text-[var(--color-muted)]">
+          <span class="inline-flex items-center gap-1">
+            <mat-icon fontIcon="help_outline" class="text-[var(--color-muted)]"></mat-icon>
+            {{ q.question_count }} preguntas
+          </span>
+          <span class="inline-flex items-center gap-1">
+            <mat-icon fontIcon="category" class="text-[var(--color-muted)]"></mat-icon>
+            {{ q.category_count }} categorías
+          </span>
+        </div>
+
+        <div class="mt-2 text-xs text-[var(--color-muted)]">
+          Creado el {{ q.created_at | date:'medium' }}
+        </div>
+      </a>
+    }
+  </div>
+
+  <!-- Cargar más -->
+  @if (items().length && !endReached()) {
+    <div class="mt-8 flex justify-center">
+      <button class="btn btn--secondary" [disabled]="loading()" (click)="loadMore()">
+        {{ loading() ? 'Cargando…' : 'Cargar más' }}
+      </button>
+    </div>
+  }
+</section>

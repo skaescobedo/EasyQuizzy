@@ -10,9 +10,12 @@ export const hostRoutes: Routes = [
     children: [
       { path: '', component: HostHomeComponent },
       { path: 'create', component: CreateQuizComponent },
-    //   { path: 'quizzes', loadComponent: () => import('../pages/host-quizzes/host-quizzes.component').then(m => m.HostQuizzesComponent) },
-    //   { path: 'analytics', loadComponent: () => import('../pages/host-analytics/host-analytics.component').then(m => m.HostAnalyticsComponent) },
-    //   { path: 'profile', loadComponent: () => import('../pages/host-profile/host-profile.component').then(m => m.HostProfileComponent) },
+
+      // 🆕 Listado de quizzes
+      { path: 'quizzes', loadComponent: () => import('./quizzes/quizzes').then(m => m.HostQuizzes) },
+
+      // (opcional futuro) viewer:
+      // { path: 'quizzes/:id', loadComponent: () => import('./quiz-viewer/quiz-viewer').then(m => m.QuizViewer) },
     ],
   },
 ];
