@@ -1,0 +1,31 @@
+<div class="space-y-2">
+  @for (a of controls; track $index; let aIndex = $index) {
+    <div [formGroup]="groupAt(aIndex)" class="flex items-center gap-2">
+      <input
+        type="text"
+        formControlName="answer_text"
+        placeholder="Opción {{ aIndex + 1 }}"
+        class="flex-1 border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-bg)] text-[var(--color-muted)]"
+        [readonly]="readonlyText" />
+
+      @if (!hideCorrectToggle) {
+        <label class="flex items-center gap-1 text-sm">
+          <input type="checkbox" formControlName="is_correct" class="accent-[var(--color-primary)]" />
+          Correcta
+        </label>
+      }
+
+      @if (!lockAddRemove) {
+        <button type="button" (click)="removeAnswer(aIndex)" class="text-[var(--color-danger)] hover:underline">
+          <mat-icon fontIcon="close"></mat-icon>
+        </button>
+      }
+    </div>
+  }
+
+  @if (!lockAddRemove) {
+    <button type="button" (click)="addAnswer()" class="text-[var(--color-primary)] hover:underline text-sm mt-2">
+      + Añadir opción
+    </button>
+  }
+</div>

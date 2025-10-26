@@ -1,0 +1,25 @@
+<div class="mb-8">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-lg font-medium">Preguntas</h2>
+    <button
+      type="button"
+      (click)="addQuestion()"
+      class="bg-[var(--color-primary)] text-white px-4 py-2 rounded-lg hover:opacity-90 transition"
+    >
+      + Añadir pregunta
+    </button>
+  </div>
+
+  <!-- SIN formArrayName aquí; pasamos cada FormGroup al hijo -->
+  <div>
+    @for (q of formArray.controls; track trackByIndex($index); let qIndex = $index) {
+      <app-question-item
+        [group]="getGroup(qIndex)"
+        [index]="qIndex"
+        [categoryNames]="categoryNames"
+        (remove)="removeQuestion(qIndex)"
+        (imageSelected)="onImageSelected(qIndex, $event)">
+      </app-question-item>
+    }
+  </div>
+</div>

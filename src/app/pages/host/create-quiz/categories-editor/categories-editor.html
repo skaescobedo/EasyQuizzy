@@ -1,0 +1,42 @@
+<div class="mb-10">
+  <div class="flex justify-between items-center mb-3">
+    <h2 class="text-lg font-medium">Categorías</h2>
+    <button
+      type="button"
+      (click)="addCategory()"
+      class="bg-[var(--color-primary)] text-white px-4 py-2 rounded-lg hover:opacity-90 transition"
+    >
+      + Añadir categoría
+    </button>
+  </div>
+
+  <p class="text-sm text-[var(--color-muted)] mb-4">
+    Estas categorías serán usadas para análisis multicriterio (TOPSIS).
+  </p>
+
+  <!-- SIN formArrayName; usamos [formGroup] por ítem -->
+  <div class="flex flex-wrap gap-2">
+    @for (cat of controls; track $index; let cIndex = $index) {
+      <div [formGroup]="groupAt(cIndex)" class="flex items-center gap-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-full px-4 py-2">
+        <input
+          type="text"
+          formControlName="name"
+          placeholder="Nombre"
+          class="bg-transparent text-sm text-[var(--color-muted)] focus:outline-none w-24"
+        />
+        <input
+          type="number"
+          formControlName="weight"
+          placeholder="Peso"
+          step="0.1"
+          class="bg-transparent text-sm text-[var(--color-muted)] w-16 focus:outline-none"
+        />
+        <input type="hidden" formControlName="order_index" />
+        <input type="hidden" formControlName="is_active" />
+        <button type="button" (click)="removeCategory(cIndex)" class="text-[var(--color-danger)]">
+          <mat-icon fontIcon="close" class="text-sm"></mat-icon>
+        </button>
+      </div>
+    }
+  </div>
+</div>

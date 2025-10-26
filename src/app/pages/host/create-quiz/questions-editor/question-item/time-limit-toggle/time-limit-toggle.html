@@ -1,0 +1,20 @@
+<div class="border-t border-[var(--color-border)] mt-4 pt-3 flex items-center gap-3" [formGroup]="group">
+  <label class="flex items-center gap-2 text-sm text-[var(--color-muted)] cursor-pointer">
+    <input
+      type="checkbox"
+      formControlName="has_time_limit"
+      class="accent-[var(--color-primary)]"
+      (change)="toggle()"
+    />
+    Agregar límite de tiempo (segundos)
+  </label>
+
+  @if (group.get('has_time_limit')?.value) {
+    <input
+      type="number"
+      formControlName="time_limit_sec"
+      placeholder="Ej. 20"
+      class="w-24 border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-muted)] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+    />
+  }
+</div>

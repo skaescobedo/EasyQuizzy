@@ -1,0 +1,56 @@
+<label
+  class="block border border-dashed border-[var(--color-border)] rounded-lg text-center py-4 text-sm text-[var(--color-muted)] mb-3 cursor-pointer"
+>
+  <input type="file" class="hidden" (change)="onChange($event)" />
+  <span class="inline-flex items-center gap-1">
+    <span class="material-icons" style="font-size:18px;">image</span>
+    Subir imagen (opcional)
+  </span>
+</label>
+
+<!-- Preview + click para abrir overlay -->
+@if (previewUrl) {
+  <div class="mt-2 flex items-start gap-3">
+    <button type="button" (click)="openOverlay()" class="focus:outline-none">
+      <img
+        [src]="previewUrl"
+        alt="Preview"
+        class="w-28 h-28 object-cover rounded-md border border-[var(--color-border)] hover:opacity-90 transition"
+      />
+    </button>
+    <div class="text-xs text-[var(--color-muted)] leading-5">
+      @if (filename) {
+        <div class="truncate max-w-[220px]"><strong>Archivo:</strong> {{ filename }}</div>
+      }
+      <div class="text-[var(--color-text)]/70">Toca la imagen para verla ampliada.</div>
+    </div>
+  </div>
+}
+
+<!-- Overlay / Lightbox -->
+@if (overlayOpen()) {
+  <div
+    class="fixed inset-0 z-[1000] bg-black/70 flex items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Vista ampliada de la imagen"
+    (click)="closeOverlay()"
+  >
+    <div class="relative max-w-[90vw] max-h-[90vh]" (click)="$event.stopPropagation()">
+      <img
+        [src]="previewUrl!"
+        alt="Imagen ampliada"
+        class="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+      />
+      <button
+        type="button"
+        (click)="closeOverlay()"
+        class="absolute -top-3 -right-3 bg-white text-black rounded-full w-8 h-8 flex items-center justify-center shadow-lg"
+        title="Cerrar"
+        aria-label="Cerrar"
+      >
+        ✕
+      </button>
+    </div>
+  </div>
+}
