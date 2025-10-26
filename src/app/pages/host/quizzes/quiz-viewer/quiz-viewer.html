@@ -1,0 +1,134 @@
+<section class="max-w-5xl mx-auto bg-[var(--color-bg)] text-[var(--color-text)] p-6 rounded-2xl shadow-lg mt-6">
+
+  <!-- Header / Back -->
+  <div class="flex items-center justify-between mb-4">
+    <a routerLink="/host/quizzes" class="text-[var(--color-primary)] hover:underline inline-flex items-center gap-1">
+      <mat-icon fontIcon="arrow_back"></mat-icon> Regresar
+    </a>
+  </div>
+
+  <!-- Loading & Error -->
+  @if (loading()) {
+    <p class="text-[var(--color-muted)]">Cargando…</p>
+  }
+  @if (error()) {
+    <div class="p-4 border border-[var(--color-border)] rounded-xl text-[var(--color-danger)] bg-[var(--color-bg-secondary)]">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Contenido -->
+  @if (!loading() && !error() && quiz()) {
+
+    <!-- Título y descripción -->
+    <h1 class="text-2xl font-semibold mb-2">{{ quiz()!.title }}</h1>
+    @if (quiz()!.description) {
+      <p class="text-[var(--color-muted)] mb-4">{{ quiz()!.description }}</p>
+    }
+
+    <!-- Categorías como chips -->
+    @if (quiz()!.categories.length) {
+      <div class="mb-8">
+        <h2 class="text-lg font-medium mb-3 border-b border-[var(--color-border)] pb-1">Categorías</h2>
+        <div class="flex flex-wrap gap-2">
+          @for (c of quiz()!.categories; track c.category_id) {
+            <span class="inline-flex items-center gap-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)]
+                         rounded-full px-4 py-2 text-sm">
+              <span class="font-medium">{{ c.name }}</span>
+              <span class="text-[var(--color-muted)]">peso {{ c.weight }}</span>
+            </span>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Preguntas -->
+    <div class="mb-2">
+      <h2 class="text-lg font-medium mb-3 border-b border-[var(--color-border)] pb-1">Preguntas</h2>
+
+      @for (q of sortedQuestions(); track q.order_index) {
+        <div class="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl p-4 mb-6">
+
+          <!-- Header pregunta -->
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <span class="font-semibold text-[var(--color-primary)]">Pregunta {{ q.order_index }}</span>
+              <h3 class="mt-1 font-medium">{{ q.question_text }}</h3>
+              @if (q.category_name) {
+                <div class="mt-1 text-xs text-[var(--color-muted)]">Categoría: {{ q.category_name }}</div>
+              }
+            </div>
+
+            <span class="text-xs px-2 py-1 rounded-full border border-[var(--color-border)] text-[var(--color-muted)]">
+              {{
+                q.question_type === 'multiple_choice' ? 'Opción múltiple' :
+                q.question_type === 'true_false' ? 'Verdadero/Falso' :
+                q.question_type === 'short_answer' ? 'Respuesta corta' : q.question_type
+              }}
+            </span>
+          </div>
+
+          <!-- Imagen -->
+          @if (q.image_url) {
+            <div class="mt-3">
+              <button type="button" (click)="openImage(q.image_url!)" class="focus:outline-none">
+                <img [src]="q.image_url!" alt="Imagen de la pregunta"
+                     class="w-52 h-52 object-cover rounded-md border border-[var(--color-border)] hover:opacity-90 transition" />
+              </button>
+            </div>
+          }
+
+          <!-- Tiempo -->
+          @if (q.time_limit_sec) {
+            <div class="mt-3 text-xs text-[var(--color-muted)]">
+              ⏱ Límite: {{ q.time_limit_sec }} s
+            </div>
+          }
+
+          <!-- Respuestas -->
+          <div class="mt-4 space-y-2">
+            @if (q.question_type === 'short_answer') {
+              <div class="border-t border-[var(--color-border)] pt-3 text-sm">
+                <span class="font-medium">Respuesta esperada: </span>
+                <span class="text-[var(--color-muted)]">{{ q.correct_text || '—' }}</span>
+              </div>
+            } @else {
+              <div class="border-t border-[var(--color-border)] pt-3">
+                @for (a of sortedAnswers(q); track a.order_index) {
+                  <div class="flex items-start gap-2 py-1">
+                    <mat-icon
+                      [fontIcon]="a.is_correct ? 'check_circle' : 'radio_button_unchecked'"
+                      [ngClass]="a.is_correct ? 'text-green-600' : 'text-[var(--color-muted)]'">
+                    </mat-icon>
+                    <span [class.text-green-700]="a.is_correct">{{ a.answer_text }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Explicación -->
+          @if (q.explanation) {
+            <div class="mt-3 border-t border-[var(--color-border)] pt-3 text-sm">
+              <span class="font-medium">Explicación:</span>
+              <span class="text-[var(--color-muted)]"> {{ q.explanation }} </span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Overlay imagen (modal) -->
+  @if (enlarged()) {
+    <div class="fixed inset-0 z-[1000] bg-black/70 flex items-center justify-center p-4"
+         (click)="closeImage()" role="dialog" aria-modal="true">
+      <div class="relative max-w-[90vw] max-h-[90vh]" (click)="$event.stopPropagation()">
+        <img [src]="enlarged()!" class="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl" />
+        <button type="button" (click)="closeImage()"
+                class="absolute -top-3 -right-3 bg-white text-black rounded-full w-8 h-8 flex items-center justify-center shadow-lg"
+                title="Cerrar" aria-label="Cerrar">✕</button>
+      </div>
+    </div>
+  }
+</section>

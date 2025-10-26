@@ -5,12 +5,14 @@ import { environment } from '../../environment/environment';
 
 export interface QuizQuestion {
   question_text: string;
-  question_type: string;
+  question_type: 'multiple_choice' | 'true_false' | 'short_answer' | string;
   explanation?: string;
   correct_text?: string;
   time_limit_sec?: number | null;
   category_name?: string | null;
   order_index: number;
+  image_url?: string | null;
+  original_filename?: string | null;
   answers: {
     answer_text: string;
     is_correct: boolean;
@@ -30,9 +32,17 @@ export interface QuizListItem {
   title: string;
   description?: string | null;
   is_public: boolean;
-  created_at: string;         // ISO string desde FastAPI
+  created_at: string; // ISO
   category_count: number;
   question_count: number;
+}
+
+export interface QuizFull {
+  quiz_id: number;
+  title: string;
+  description?: string | null;
+  categories: { category_id: number; name: string; weight: number; order_index: number }[];
+  questions: QuizQuestion[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -40,35 +50,23 @@ export class QuizService {
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/quizzes`;
 
-  // 🆕 Listado del usuario autenticado
   async listMyQuizzes(limit = 12, offset = 0): Promise<QuizListItem[]> {
-    const params = new HttpParams()
-      .set('limit', limit)
-      .set('offset', offset);
-
-    const obs$ = this.http.get<QuizListItem[]>(this.base, { params });
-    return await lastValueFrom(obs$);
+    const params = new HttpParams().set('limit', limit).set('offset', offset);
+    return await lastValueFrom(this.http.get<QuizListItem[]>(this.base, { params }));
   }
 
-  // Crear quiz (con imágenes indexadas por order_index)
-  async createQuiz(
-    data: QuizPayload,
-    images: { index: number; file: File }[]
-  ): Promise<any> {
+  async createQuiz(data: QuizPayload, images: { index: number; file: File }[]): Promise<any> {
     const formData = new FormData();
-
     formData.append('quiz_data', JSON.stringify(data));
-
     for (const { index, file } of images) {
       const ext = file.name.includes('.') ? file.name.split('.').pop()! : 'png';
-      const filename = `${index}.${ext}`;
-      formData.append('images', file, filename);
+      formData.append('images', file, `${index}.${ext}`);
     }
-
-    const result$ = this.http.post(this.base + '/', formData);
-    return await lastValueFrom(result$);
+    return await lastValueFrom(this.http.post(this.base + '/', formData));
   }
 
-  // (opcional futuro) detalle:
-  // async getQuiz(id: number) { return await lastValueFrom(this.http.get(`${this.base}/${id}`)); }
+  // 🆕 detalle
+  async getQuiz(id: number): Promise<QuizFull> {
+    return await lastValueFrom(this.http.get<QuizFull>(`${this.base}/${id}`));
+  }
 }

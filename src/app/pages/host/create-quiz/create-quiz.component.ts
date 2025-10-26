@@ -75,21 +75,32 @@ export class CreateQuizComponent {
         })),
       }));
 
+      // Importante: el backend asocia imágenes por "order_index" usando el nombre del archivo (p.ej. 1.png)
       const imagesByIndex: { index: number; file: File }[] = (raw.questions ?? [])
         .map((q: any, idx: number) => (q?.image ? { index: idx + 1, file: q.image as File } : null))
-        .filter((x: any) => !!x);
+        .filter((x: any) => !!x) as any[];
 
-      await this.quizService.createQuiz(
+      // ⬇️ Recibimos el quiz creado (debe traer quiz_id)
+      const created = await this.quizService.createQuiz(
         { title: raw.title!, description: raw.description || '', categories, questions },
         imagesByIndex
       );
 
       this.success.set(true);
+
+      // Limpieza local del formulario
       this.quizForm.reset();
       this.questions.clear();
       this.categories.clear();
 
-      this.router.navigate(['/host/quizzes']);
+      // 🚀 Ir al viewer del quiz recién creado
+      const id = created?.quiz_id ?? created?.id ?? created?.data?.quiz_id;
+      if (id) {
+        this.router.navigate(['/host/quizzes', id]); // ruta: /host/quizzes/:id
+      } else {
+        // fallback por si la API no regresó el id como esperamos
+        this.router.navigate(['/host/quizzes']);
+      }
     } catch (err: any) {
       console.error(err);
       this.error.set(err?.error?.detail || 'Error al crear el quiz.');
