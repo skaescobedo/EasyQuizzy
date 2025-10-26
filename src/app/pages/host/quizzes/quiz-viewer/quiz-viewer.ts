@@ -21,6 +21,9 @@ export class QuizViewer {
 
   enlarged = signal<string | null>(null); // overlay para imagen
 
+  // Estado de expansión por order_index
+  private expandedSet = signal<Set<number>>(new Set<number>());
+
   // Ordenar preguntas por order_index
   sortedQuestions = computed(() => {
     const q = this.quiz()?.questions ?? [];
@@ -31,6 +34,25 @@ export class QuizViewer {
   sortedAnswers(q: QuizQuestion) {
     const arr = q.answers ?? [];
     return [...arr].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+  }
+
+  // Helpers de expand/collapse
+  isOpen(orderIndex: number) {
+    return this.expandedSet().has(orderIndex);
+  }
+  toggle(orderIndex: number) {
+    const next = new Set(this.expandedSet());
+    if (next.has(orderIndex)) next.delete(orderIndex);
+    else next.add(orderIndex);
+    this.expandedSet.set(next);
+  }
+  expandAll() {
+    const next = new Set<number>();
+    for (const q of this.sortedQuestions()) next.add(q.order_index);
+    this.expandedSet.set(next);
+  }
+  collapseAll() {
+    this.expandedSet.set(new Set<number>());
   }
 
   async ngOnInit() {
@@ -45,6 +67,13 @@ export class QuizViewer {
       this.error.set(null);
       const data = await this.api.getQuiz(id);
       this.quiz.set(data);
+
+      // Por defecto: todo expandido
+      const all = new Set<number>();
+      for (const q of data.questions ?? []) {
+        if (typeof q.order_index === 'number') all.add(q.order_index);
+      }
+      this.expandedSet.set(all);
     } catch (e: any) {
       this.error.set(e?.error?.detail || 'No se pudo cargar el quiz.');
     } finally {
@@ -59,4 +88,3 @@ export class QuizViewer {
     this.enlarged.set(null);
   }
 }
-

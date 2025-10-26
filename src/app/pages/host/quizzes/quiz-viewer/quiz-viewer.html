@@ -44,19 +44,39 @@
 
     <!-- Preguntas -->
     <div class="mb-2">
-      <h2 class="text-lg font-medium mb-3 border-b border-[var(--color-border)] pb-1">Preguntas</h2>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-medium border-b border-[var(--color-border)] pb-1">Preguntas</h2>
+        <div class="flex items-center gap-2">
+          <button type="button" class="text-xs px-3 py-1 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)]"
+                  (click)="expandAll()">Expandir todo</button>
+          <button type="button" class="text-xs px-3 py-1 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)]"
+                  (click)="collapseAll()">Contraer todo</button>
+        </div>
+      </div>
 
       @for (q of sortedQuestions(); track q.order_index) {
         <div class="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl p-4 mb-6">
 
-          <!-- Header pregunta -->
+          <!-- Header pregunta (botón circular a la izquierda junto a 'Pregunta N') -->
           <div class="flex items-start justify-between mb-2">
-            <div>
-              <span class="font-semibold text-[var(--color-primary)]">Pregunta {{ q.order_index }}</span>
-              <h3 class="mt-1 font-medium">{{ q.question_text }}</h3>
-              @if (q.category_name) {
-                <div class="mt-1 text-xs text-[var(--color-muted)]">Categoría: {{ q.category_name }}</div>
-              }
+            <div class="flex items-start gap-2 pr-3">
+              <button type="button"
+                      class="w-8 h-8 rounded-full border border-[var(--color-border)] inline-flex items-center justify-center hover:bg-[var(--color-bg)] transition"
+                      (click)="toggle(q.order_index)"
+                      [attr.aria-expanded]="isOpen(q.order_index)"
+                      [title]="isOpen(q.order_index) ? 'Contraer' : 'Expandir'">
+                <mat-icon fontIcon="expand_more"
+                          [ngClass]="isOpen(q.order_index) ? 'rotate-180 transition-transform' : 'transition-transform'">
+                </mat-icon>
+              </button>
+
+              <div>
+                <span class="font-semibold text-[var(--color-primary)]">Pregunta {{ q.order_index }}</span>
+                <h3 class="mt-1 font-medium">{{ q.question_text }}</h3>
+                @if (q.category_name) {
+                  <div class="mt-1 text-xs text-[var(--color-muted)]">Categoría: {{ q.category_name }}</div>
+                }
+              </div>
             </div>
 
             <span class="text-xs px-2 py-1 rounded-full border border-[var(--color-border)] text-[var(--color-muted)]">
@@ -68,51 +88,55 @@
             </span>
           </div>
 
-          <!-- Imagen -->
-          @if (q.image_url) {
-            <div class="mt-3">
-              <button type="button" (click)="openImage(q.image_url!)" class="focus:outline-none">
-                <img [src]="q.image_url!" alt="Imagen de la pregunta"
-                     class="w-52 h-52 object-cover rounded-md border border-[var(--color-border)] hover:opacity-90 transition" />
-              </button>
-            </div>
-          }
+          <!-- Cuerpo colapsable -->
+          @if (isOpen(q.order_index)) {
 
-          <!-- Tiempo -->
-          @if (q.time_limit_sec) {
-            <div class="mt-3 text-xs text-[var(--color-muted)]">
-              ⏱ Límite: {{ q.time_limit_sec }} s
-            </div>
-          }
-
-          <!-- Respuestas -->
-          <div class="mt-4 space-y-2">
-            @if (q.question_type === 'short_answer') {
-              <div class="border-t border-[var(--color-border)] pt-3 text-sm">
-                <span class="font-medium">Respuesta esperada: </span>
-                <span class="text-[var(--color-muted)]">{{ q.correct_text || '—' }}</span>
-              </div>
-            } @else {
-              <div class="border-t border-[var(--color-border)] pt-3">
-                @for (a of sortedAnswers(q); track a.order_index) {
-                  <div class="flex items-start gap-2 py-1">
-                    <mat-icon
-                      [fontIcon]="a.is_correct ? 'check_circle' : 'radio_button_unchecked'"
-                      [ngClass]="a.is_correct ? 'text-green-600' : 'text-[var(--color-muted)]'">
-                    </mat-icon>
-                    <span [class.text-green-700]="a.is_correct">{{ a.answer_text }}</span>
-                  </div>
-                }
+            <!-- Imagen -->
+            @if (q.image_url) {
+              <div class="mt-3">
+                <button type="button" (click)="openImage(q.image_url!)" class="focus:outline-none">
+                  <img [src]="q.image_url!" alt="Imagen de la pregunta"
+                       class="w-52 h-52 object-cover rounded-md border border-[var(--color-border)] hover:opacity-90 transition" />
+                </button>
               </div>
             }
-          </div>
 
-          <!-- Explicación -->
-          @if (q.explanation) {
-            <div class="mt-3 border-t border-[var(--color-border)] pt-3 text-sm">
-              <span class="font-medium">Explicación:</span>
-              <span class="text-[var(--color-muted)]"> {{ q.explanation }} </span>
+            <!-- Tiempo -->
+            @if (q.time_limit_sec) {
+              <div class="mt-3 text-xs text-[var(--color-muted)]">
+                ⏱ Límite: {{ q.time_limit_sec }} s
+              </div>
+            }
+
+            <!-- Respuestas -->
+            <div class="mt-4 space-y-2">
+              @if (q.question_type === 'short_answer') {
+                <div class="border-t border-[var(--color-border)] pt-3 text-sm">
+                  <span class="font-medium">Respuesta esperada: </span>
+                  <span class="text-[var(--color-muted)]">{{ q.correct_text || '—' }}</span>
+                </div>
+              } @else {
+                <div class="border-t border-[var(--color-border)] pt-3">
+                  @for (a of sortedAnswers(q); track a.order_index) {
+                    <div class="flex items-start gap-2 py-1">
+                      <mat-icon
+                        [fontIcon]="a.is_correct ? 'check_circle' : 'radio_button_unchecked'"
+                        [ngClass]="a.is_correct ? 'text-green-600' : 'text-[var(--color-muted)]'">
+                      </mat-icon>
+                      <span [class.text-green-700]="a.is_correct">{{ a.answer_text }}</span>
+                    </div>
+                  }
+                </div>
+              }
             </div>
+
+            <!-- Explicación -->
+            @if (q.explanation) {
+              <div class="mt-3 border-t border-[var(--color-border)] pt-3 text-sm">
+                <span class="font-medium">Explicación:</span>
+                <span class="text-[var(--color-muted)]"> {{ q.explanation }} </span>
+              </div>
+            }
           }
         </div>
       }

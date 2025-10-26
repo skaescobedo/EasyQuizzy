@@ -6,10 +6,13 @@
         type="button"
         (click)="toggleCollapse()"
         [attr.aria-expanded]="!collapsed()"
-        class="w-8 h-8 flex items-center justify-center rounded-md border border-[var(--color-border)] hover:bg-[var(--color-bg)] transition"
-        title="{{ collapsed() ? 'Expandir' : 'Colapsar' }}"
+        class="w-8 h-8 rounded-full border border-[var(--color-border)] inline-flex items-center justify-center hover:bg-[var(--color-bg)] transition"
+        [title]="collapsed() ? 'Expandir' : 'Contraer'"
       >
-        <mat-icon [fontIcon]="collapsed() ? 'keyboard_arrow_right' : 'keyboard_arrow_down'"></mat-icon>
+        <mat-icon
+          fontIcon="expand_more"
+          [ngClass]="!collapsed() ? 'rotate-180 transition-transform' : 'transition-transform'">
+        </mat-icon>
       </button>
 
       <span class="font-semibold text-[var(--color-primary)]">Pregunta {{ index + 1 }}</span>
@@ -20,11 +23,8 @@
         </span>
       }
     </div>
-
-    <button type="button" (click)="remove.emit()" class="text-[var(--color-danger)] hover:underline">
-      <mat-icon fontIcon="delete"></mat-icon>
-    </button>
   </div>
+
 
   <!-- Contenido colapsable -->
   @if (!collapsed()) {
