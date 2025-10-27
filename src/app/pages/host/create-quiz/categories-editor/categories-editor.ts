@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormArray, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,6 +12,8 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class CategoriesEditor {
   @Input({ required: true }) formArray!: FormArray;
+  @Output() removedCategory = new EventEmitter<string>(); // 👈 notifica el nombre eliminado
+
   private fb = inject(FormBuilder);
 
   addCategory() {
@@ -27,7 +29,12 @@ export class CategoriesEditor {
   }
 
   removeCategory(i: number) {
+    // Obtener el nombre ANTES de eliminar
+    const name = (this.groupAt(i).get('name')?.value as string | null)?.trim() || '';
+    if (name) this.removedCategory.emit(name);
+
     this.formArray.removeAt(i);
+    // Re-index
     this.formArray.controls.forEach((ctrl, idx) => ctrl.get('order_index')?.setValue(idx + 1));
   }
 

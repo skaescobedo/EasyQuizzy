@@ -1,0 +1,580 @@
+
+==============================
+Archivo: src/app/services/quiz.service.ts
+==============================
+
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
+import { environment } from '../../environment/environment';
+
+export interface QuizQuestion {
+  question_text: string;
+  question_type: 'multiple_choice' | 'true_false' | 'short_answer' | string;
+  explanation?: string;
+  correct_text?: string;
+  time_limit_sec?: number | null;
+  category_name?: string | null;
+  order_index: number;
+  image_url?: string | null;
+  original_filename?: string | null;
+  answers: {
+    answer_text: string;
+    is_correct: boolean;
+    order_index: number;
+  }[];
+}
+
+export interface QuizPayload {
+  title: string;
+  description?: string;
+  categories?: any[];
+  questions: QuizQuestion[];
+}
+
+export interface QuizListItem {
+  quiz_id: number;
+  title: string;
+  description?: string | null;
+  is_public: boolean;
+  created_at: string; // ISO
+  category_count: number;
+  question_count: number;
+}
+
+export interface QuizFull {
+  quiz_id: number;
+  title: string;
+  description?: string | null;
+  categories: { category_id: number; name: string; weight: number; order_index: number }[];
+  questions: QuizQuestion[];
+}
+
+@Injectable({ providedIn: 'root' })
+export class QuizService {
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/quizzes`;
+
+  async listMyQuizzes(limit = 12, offset = 0): Promise<QuizListItem[]> {
+    const params = new HttpParams().set('limit', limit).set('offset', offset);
+    return await lastValueFrom(this.http.get<QuizListItem[]>(this.base, { params }));
+  }
+
+  async createQuiz(data: QuizPayload, images: { index: number; file: File }[]): Promise<any> {
+    const formData = new FormData();
+    formData.append('quiz_data', JSON.stringify(data));
+    for (const { index, file } of images) {
+      const ext = file.name.includes('.') ? file.name.split('.').pop()! : 'png';
+      formData.append('images', file, `${index}.${ext}`);
+    }
+    return await lastValueFrom(this.http.post(this.base + '/', formData));
+  }
+
+  // 🆕 detalle
+  async getQuiz(id: number): Promise<QuizFull> {
+    return await lastValueFrom(this.http.get<QuizFull>(`${this.base}/${id}`));
+  }
+}
+
+==============================
+Archivo: src/app/pages/host/create-quiz/create-quiz.component.ts
+==============================
+
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormArray, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+
+import { QuizService } from '../../../services/quiz.service';
+import { CategoriesEditor } from './categories-editor/categories-editor';
+import { QuestionsEditor } from './questions-editor/questions-editor';
+
+@Component({
+  selector: 'app-create-quiz',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule, CategoriesEditor, QuestionsEditor],
+  templateUrl: './create-quiz.component.html',
+})
+export class CreateQuizComponent {
+  private fb = inject(FormBuilder);
+  private quizService = inject(QuizService);
+  private router = inject(Router);
+
+  loading = signal(false);
+  success = signal(false);
+  error = signal<string | null>(null);
+
+  quizForm = this.fb.group({
+    title: ['', [Validators.required, Validators.maxLength(120)]],
+    description: [''],
+    categories: this.fb.array([]),
+    questions: this.fb.array([]),
+  });
+
+  // === Getters ===
+  get questions() { return this.quizForm.get('questions') as FormArray; }
+  get categories() { return this.quizForm.get('categories') as FormArray; }
+
+  // Nombres de categorías para el selector (sin arrow functions en template)
+  get categoryNames(): string[] {
+    const arr = (this.categories?.value ?? []) as any[];
+    return arr.map(c => c?.name).filter((n: any) => !!n);
+  }
+
+  // === Submit ===
+  async submitQuiz() {
+    if (this.quizForm.invalid) {
+      this.error.set('Por favor completa los campos requeridos.');
+      return;
+    }
+
+    this.loading.set(true);
+    this.error.set(null);
+
+    try {
+      const raw = this.quizForm.getRawValue() as any;
+
+      const categories = (raw.categories ?? []).map((c: any, idx: number) => ({
+        name: c.name,
+        weight: c.weight,
+        order_index: idx + 1,
+        is_active: c.is_active ?? true,
+      }));
+
+      const questions = (raw.questions ?? []).map((q: any, idx: number) => ({
+        question_text: q.question_text,
+        question_type: q.question_type,
+        explanation: q.explanation || null,
+        correct_text: q.correct_text || null,
+        time_limit_sec: q.has_time_limit ? q.time_limit_sec : null,
+        category_name: q.category_name || null,
+        order_index: idx + 1,
+        answers: (q.answers ?? []).map((a: any, j: number) => ({
+          answer_text: a.answer_text,
+          is_correct: !!a.is_correct,
+          order_index: j + 1,
+        })),
+      }));
+
+      // Importante: el backend asocia imágenes por "order_index" usando el nombre del archivo (p.ej. 1.png)
+      const imagesByIndex: { index: number; file: File }[] = (raw.questions ?? [])
+        .map((q: any, idx: number) => (q?.image ? { index: idx + 1, file: q.image as File } : null))
+        .filter((x: any) => !!x) as any[];
+
+      // ⬇️ Recibimos el quiz creado (debe traer quiz_id)
+      const created = await this.quizService.createQuiz(
+        { title: raw.title!, description: raw.description || '', categories, questions },
+        imagesByIndex
+      );
+
+      this.success.set(true);
+
+      // Limpieza local del formulario
+      this.quizForm.reset();
+      this.questions.clear();
+      this.categories.clear();
+
+      // 🚀 Ir al viewer del quiz recién creado
+      const id = created?.quiz_id ?? created?.id ?? created?.data?.quiz_id;
+      if (id) {
+        this.router.navigate(['/host/quizzes', id]); // ruta: /host/quizzes/:id
+      } else {
+        // fallback por si la API no regresó el id como esperamos
+        this.router.navigate(['/host/quizzes']);
+      }
+    } catch (err: any) {
+      console.error(err);
+      this.error.set(err?.error?.detail || 'Error al crear el quiz.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+}
+
+==============================
+Archivo: src/app/pages/host/create-quiz/create-quiz.component.html
+==============================
+
+<section class="max-w-5xl mx-auto bg-[var(--color-bg)] text-[var(--color-text)] p-6 rounded-2xl shadow-lg mt-6">
+  <h1 class="text-2xl font-semibold mb-2">Crear un nuevo quiz</h1>
+  <p class="text-[var(--color-muted)] mb-6">Completa los datos, categorías y añade tus preguntas para comenzar.</p>
+
+  <!-- MOVER AQUÍ el formGroup -->
+  <form [formGroup]="quizForm" (ngSubmit)="submitQuiz()">
+    <!-- 🟦 Información general -->
+    <div class="mb-8">
+      <h2 class="text-lg font-medium mb-3 border-b border-[var(--color-border)] pb-1">Información general</h2>
+
+      <label class="block mb-2 font-medium">Título del quiz</label>
+      <input
+        formControlName="title"
+        placeholder="Ej: Conocimientos de Python"
+        class="w-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-lg px-3 py-2 text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+      />
+
+      <label class="block mt-4 mb-2 font-medium">Descripción (opcional)</label>
+      <textarea
+        formControlName="description"
+        rows="3"
+        placeholder="Describe brevemente el propósito del quiz"
+        class="w-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-lg px-3 py-2 text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+      ></textarea>
+    </div>
+
+    <!-- 🟩 Categorías -->
+    <app-categories-editor [formArray]="categories"></app-categories-editor>
+
+    <!-- 🟧 Preguntas -->
+    <app-questions-editor
+      class="block mt-8"
+      [formArray]="questions"
+      [categoryNames]="categoryNames">
+    </app-questions-editor>
+
+    <!-- ⚙️ Botones -->
+    <div class="flex justify-between items-center pt-4 border-t border-[var(--color-border)] mt-8">
+      <button
+        type="button"
+        routerLink="/host/quizzes"
+        class="text-[var(--color-primary)] hover:underline font-medium"
+      >
+        Regresar
+      </button>
+
+      <button
+        type="submit"
+        [disabled]="loading()"
+        class="bg-[var(--color-primary)] text-white px-6 py-2 rounded-lg hover:opacity-90 transition"
+      >
+        {{ loading() ? 'Guardando...' : 'Guardar Quiz' }}
+      </button>
+    </div>
+
+    @if (error()) {
+      <p class="text-[var(--color-danger)] mt-3">{{ error() }}</p>
+    }
+    @if (success()) {
+      <p class="text-green-600 mt-3">✅ Quiz creado correctamente</p>
+    }
+  </form>
+</section>
+
+==============================
+Archivo: src/app/pages/host/create-quiz/questions-editor/questions-editor.ts
+==============================
+
+import { Component, Input, ChangeDetectionStrategy, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormArray, FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
+
+import { QuestionItem } from './question-item/question-item';
+
+@Component({
+  selector: 'app-questions-editor',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule, QuestionItem],
+  templateUrl: './questions-editor.html',
+})
+export class QuestionsEditor {
+  @Input({ required: true }) formArray!: FormArray;
+  @Input() categoryNames: string[] = [];
+
+  private fb = inject(FormBuilder);
+
+  addQuestion() {
+    this.formArray.push(
+      this.fb.group({
+        question_text: ['', Validators.required],
+        question_type: ['multiple_choice', Validators.required],
+        explanation: [''],
+        correct_text: [''],
+        has_time_limit: [false],
+        time_limit_sec: [null],
+        category_name: [''],
+        // 👇 OJITO: valores vacíos para que el input muestre placeholder
+        answers: this.fb.array([
+          this.fb.group({ answer_text: ['', Validators.required], is_correct: [false] }),
+          this.fb.group({ answer_text: ['', Validators.required], is_correct: [false] }),
+        ]),
+        image: [null],
+      })
+    );
+  }
+
+  removeQuestion(i: number) {
+    this.formArray.removeAt(i);
+  }
+
+  onImageSelected(i: number, file: File) {
+    const q = this.getGroup(i);
+    q.patchValue({ image: file });
+  }
+
+  getGroup(i: number): FormGroup {
+    return this.formArray.at(i) as FormGroup;
+  }
+
+  trackByIndex = (index: number) => index;
+}
+
+==============================
+Archivo: src/app/pages/host/create-quiz/questions-editor/questions-editor.html
+==============================
+
+<div class="mb-8">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-lg font-medium">Preguntas</h2>
+    <button
+      type="button"
+      (click)="addQuestion()"
+      class="bg-[var(--color-primary)] text-white px-4 py-2 rounded-lg hover:opacity-90 transition"
+    >
+      + Añadir pregunta
+    </button>
+  </div>
+
+  <!-- SIN formArrayName aquí; pasamos cada FormGroup al hijo -->
+  <div>
+    @for (q of formArray.controls; track trackByIndex($index); let qIndex = $index) {
+      <app-question-item
+        [group]="getGroup(qIndex)"
+        [index]="qIndex"
+        [categoryNames]="categoryNames"
+        (remove)="removeQuestion(qIndex)"
+        (imageSelected)="onImageSelected(qIndex, $event)">
+      </app-question-item>
+    }
+  </div>
+</div>
+
+==============================
+Archivo: src/app/pages/host/create-quiz/questions-editor/question-item/question-item.ts
+==============================
+
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  ChangeDetectionStrategy,
+  signal,
+  OnInit,
+  OnDestroy,
+  inject,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormGroup, FormArray, FormBuilder, Validators } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
+
+import { AnswersEditor } from './answers-editor/answers-editor';
+import { ImageUploader } from './image-uploader/image-uploader';
+import { TimeLimitToggle } from './time-limit-toggle/time-limit-toggle';
+
+@Component({
+  selector: 'app-question-item',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule, AnswersEditor, ImageUploader, TimeLimitToggle],
+  templateUrl: './question-item.html',
+})
+export class QuestionItem implements OnInit, OnDestroy {
+  @Input({ required: true }) group!: FormGroup;
+  @Input() categoryNames: string[] = [];
+  @Input() index = 0;
+  @Input() startCollapsed = false;
+
+  @Output() remove = new EventEmitter<void>();
+  @Output() imageSelected = new EventEmitter<File>();
+
+  private fb = inject(FormBuilder);
+  collapsed = signal<boolean>(false);
+
+  /** preview local; si viene de archivo será blob:, si ya existiera un URL será http(s): */
+  previewUrl = signal<string | null>(null);
+  previewName = signal<string | null>(null);
+
+  ngOnInit(): void {
+    if (this.startCollapsed) this.collapsed.set(true);
+
+    // Reaccionar a cambios de tipo
+    this.group.get('question_type')?.valueChanges.subscribe((nextType: string) => {
+      this.onTypeChange(nextType);
+    });
+    this.onTypeChange(this.type);
+
+    // Si en algún momento precargas un 'image_url' (modo edición), muéstralo:
+    const existingUrl = this.group.get('image_url')?.value as string | null;
+    if (existingUrl) {
+      this.previewUrl.set(existingUrl);
+      this.previewName.set(this.group.get('original_filename')?.value ?? null);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.revokePreview();
+  }
+
+  get answersArray(): FormArray {
+    return this.group.get('answers') as FormArray;
+  }
+
+  get questionText(): string {
+    return (this.group.get('question_text')?.value as string) ?? '';
+  }
+
+  get type(): string {
+    return (this.group.get('question_type')?.value as string) ?? 'multiple_choice';
+  }
+
+  toggleCollapse(): void {
+    this.collapsed.update(v => !v);
+  }
+
+  onFileSelected(file: File) {
+    // Emitir hacia arriba (para que el padre lo ponga en el FormGroup 'image')
+    this.imageSelected.emit(file);
+
+    // Actualizar preview local
+    this.revokePreview();
+    const url = URL.createObjectURL(file);
+    this.previewUrl.set(url);
+    this.previewName.set(file.name);
+  }
+
+  private revokePreview() {
+    const url = this.previewUrl();
+    if (url && url.startsWith('blob:')) {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  onTypeChange(nextType: string) {
+    if (!nextType) return;
+    const answers = this.answersArray;
+
+    if (nextType === 'true_false') {
+      answers.clear();
+      answers.push(this.fb.group({ answer_text: ['Verdadero', Validators.required], is_correct: [true] }));
+      answers.push(this.fb.group({ answer_text: ['Falso', Validators.required], is_correct: [false] }));
+      this.group.get('correct_text')?.setValue(null);
+      return;
+    }
+
+    if (nextType === 'short_answer') {
+      answers.clear();
+      if (this.group.get('correct_text')?.value == null) {
+        this.group.get('correct_text')?.setValue('');
+      }
+      return;
+    }
+
+    // multiple_choice ⇒ siempre regenerar 2 vacías (para que se vean placeholders)
+    answers.clear();
+    answers.push(this.fb.group({ answer_text: ['', Validators.required], is_correct: [false] }));
+    answers.push(this.fb.group({ answer_text: ['', Validators.required], is_correct: [false] }));
+    this.group.get('correct_text')?.setValue(null);
+  }
+}
+
+==============================
+Archivo: src/app/pages/host/create-quiz/questions-editor/question-item/question-item.html
+==============================
+
+<div [formGroup]="group" class="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl p-4 mb-6">
+  <!-- Header con toggle -->
+  <div class="flex justify-between items-center mb-2">
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="toggleCollapse()"
+        [attr.aria-expanded]="!collapsed()"
+        class="w-8 h-8 rounded-full border border-[var(--color-border)] inline-flex items-center justify-center hover:bg-[var(--color-bg)] transition"
+        [title]="collapsed() ? 'Expandir' : 'Contraer'"
+      >
+        <mat-icon
+          fontIcon="expand_more"
+          [ngClass]="!collapsed() ? 'rotate-180 transition-transform' : 'transition-transform'">
+        </mat-icon>
+      </button>
+
+      <span class="font-semibold text-[var(--color-primary)]">Pregunta {{ index + 1 }}</span>
+
+      @if (collapsed()) {
+        <span class="text-xs text-[var(--color-muted)] truncate max-w-[420px]">
+          — {{ questionText || 'Sin título' }}
+        </span>
+      }
+    </div>
+  </div>
+
+
+  <!-- Contenido colapsable -->
+  @if (!collapsed()) {
+    <input
+      type="text"
+      formControlName="question_text"
+      placeholder="Escribe la pregunta aquí"
+      class="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 mb-3 bg-[var(--color-bg)] text-[var(--color-muted)]"
+    />
+
+    <!-- Selector de categoría -->
+    <label class="block mb-2 font-medium text-sm">Categoría (opcional)</label>
+    <select
+      formControlName="category_name"
+      class="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-bg)] text-[var(--color-muted)] mb-3"
+    >
+      <option value="">Sin categoría</option>
+      @for (name of categoryNames; track $index) {
+        <option [value]="name">{{ name || 'Sin nombre' }}</option>
+      }
+    </select>
+
+    <!-- Uploader -->
+    <!-- Uploader con preview -->
+    <app-image-uploader
+      (fileSelected)="onFileSelected($event)"
+      [previewUrl]="previewUrl()"
+      [filename]="previewName()">
+    </app-image-uploader>
+
+
+    <!-- Tipo -->
+    <label class="block mb-1 font-medium">Tipo de pregunta</label>
+    <select
+      formControlName="question_type"
+      class="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-bg)] text-[var(--color-muted)] mb-2"
+    >
+      <option value="multiple_choice">Opción múltiple</option>
+      <option value="true_false">Falso / Verdadero</option>
+      <option value="short_answer">Respuesta corta</option>
+    </select>
+
+    <!-- Respuesta corta -->
+    @if (type === 'short_answer') {
+      <label class="block mb-2 font-medium text-sm">Respuesta correcta (texto)</label>
+      <input
+        type="text"
+        formControlName="correct_text"
+        placeholder="Respuesta esperada"
+        class="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-bg)] text-[var(--color-muted)] mb-3"
+      />
+    }
+
+    <!-- Respuestas (MC y TF) -->
+    @if (type !== 'short_answer') {
+      <app-answers-editor class="mt-2"
+        [formArray]="answersArray"
+        [lockAddRemove]="type === 'true_false'"
+        [hideCorrectToggle]="type === 'true_false'"
+        [readonlyText]="type === 'true_false'">
+      </app-answers-editor>
+    }
+
+
+    <!-- Tiempo -->
+    <app-time-limit-toggle class="mt-4" [group]="group"></app-time-limit-toggle>
+  }
+</div>

@@ -1,17 +1,18 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormArray, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormArray, Validators, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 
-import { QuizService } from '../../../services/quiz.service';
+import { QuizService, QuizPayload } from '../../../services/quiz.service';
 import { CategoriesEditor } from './categories-editor/categories-editor';
 import { QuestionsEditor } from './questions-editor/questions-editor';
+import { AIBuilder } from './ai-builder/ai-builder';
 
 @Component({
   selector: 'app-create-quiz',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule, CategoriesEditor, QuestionsEditor],
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule, CategoriesEditor, QuestionsEditor, AIBuilder],
   templateUrl: './create-quiz.component.html',
 })
 export class CreateQuizComponent {
@@ -22,6 +23,9 @@ export class CreateQuizComponent {
   loading = signal(false);
   success = signal(false);
   error = signal<string | null>(null);
+
+  // Toggle de modo (manual / IA)
+  useAI = signal<boolean>(false);
 
   quizForm = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(120)]],
@@ -34,10 +38,80 @@ export class CreateQuizComponent {
   get questions() { return this.quizForm.get('questions') as FormArray; }
   get categories() { return this.quizForm.get('categories') as FormArray; }
 
-  // Nombres de categorías para el selector (sin arrow functions en template)
+  // Nombres de categorías para el selector
   get categoryNames(): string[] {
     const arr = (this.categories?.value ?? []) as any[];
     return arr.map(c => c?.name).filter((n: any) => !!n);
+  }
+
+  // Cambiar modo
+  setMode(ai: boolean) { this.useAI.set(ai); }
+
+  /** Hidratar form con un preview de IA */
+  loadPreviewFromAI(payload: QuizPayload) {
+    // Limpia
+    this.quizForm.reset();
+    this.categories.clear();
+    this.questions.clear();
+
+    // Título/Descripción
+    this.quizForm.patchValue({
+      title: payload.title || '',
+      description: payload.description || '',
+    });
+
+    // Categorías
+    (payload.categories || []).forEach((c: any) => {
+      this.categories.push(
+        this.fb.group({
+          name: [c.name || 'General', Validators.required],
+          weight: [Number(c.weight ?? 1), [Validators.required]],
+          is_active: [true],
+        })
+      );
+    });
+
+    // Preguntas
+    (payload.questions || []).forEach((q) => {
+      this.questions.push(
+        this.fb.group({
+          question_text: [q.question_text || '', Validators.required],
+          question_type: [q.question_type || 'multiple_choice', Validators.required],
+          explanation: [q.explanation ?? ''],
+          correct_text: [q.correct_text ?? ''],
+          has_time_limit: [!!q.time_limit_sec],
+          time_limit_sec: [q.time_limit_sec ?? null],
+          category_name: [q.category_name ?? ''],
+          answers: this.fb.array(
+            (q.answers || []).map(a =>
+              this.fb.group({
+                answer_text: [a.answer_text || '', Validators.required],
+                is_correct: [!!a.is_correct],
+              })
+            )
+          ),
+          image: [null],
+          image_url: [q.image_url ?? null],
+          original_filename: [q.original_filename ?? null],
+        })
+      );
+    });
+
+    // Vuelve a Manual para editar/guardar
+    this.useAI.set(false);
+    this.success.set(true);
+  }
+
+  /** Si se elimina una categoría, poner esas preguntas en "Sin categoría" */
+  onCategoryRemoved(name: string) {
+    if (!name) return;
+    for (let i = 0; i < this.questions.length; i++) {
+      const g = this.questions.at(i) as FormGroup;
+      const current = (g.get('category_name')?.value as string) || '';
+      if (current === name) {
+        g.get('category_name')?.setValue('');
+      }
+    }
   }
 
   // === Submit ===
@@ -75,12 +149,10 @@ export class CreateQuizComponent {
         })),
       }));
 
-      // Importante: el backend asocia imágenes por "order_index" usando el nombre del archivo (p.ej. 1.png)
       const imagesByIndex: { index: number; file: File }[] = (raw.questions ?? [])
         .map((q: any, idx: number) => (q?.image ? { index: idx + 1, file: q.image as File } : null))
         .filter((x: any) => !!x) as any[];
 
-      // ⬇️ Recibimos el quiz creado (debe traer quiz_id)
       const created = await this.quizService.createQuiz(
         { title: raw.title!, description: raw.description || '', categories, questions },
         imagesByIndex
@@ -88,17 +160,16 @@ export class CreateQuizComponent {
 
       this.success.set(true);
 
-      // Limpieza local del formulario
+      // Limpieza
       this.quizForm.reset();
       this.questions.clear();
       this.categories.clear();
 
-      // 🚀 Ir al viewer del quiz recién creado
+      // Ir al viewer
       const id = created?.quiz_id ?? created?.id ?? created?.data?.quiz_id;
       if (id) {
-        this.router.navigate(['/host/quizzes', id]); // ruta: /host/quizzes/:id
+        this.router.navigate(['/host/quizzes', id]);
       } else {
-        // fallback por si la API no regresó el id como esperamos
         this.router.navigate(['/host/quizzes']);
       }
     } catch (err: any) {

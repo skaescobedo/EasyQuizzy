@@ -2,62 +2,93 @@
   <h1 class="text-2xl font-semibold mb-2">Crear un nuevo quiz</h1>
   <p class="text-[var(--color-muted)] mb-6">Completa los datos, categorías y añade tus preguntas para comenzar.</p>
 
-  <!-- MOVER AQUÍ el formGroup -->
-  <form [formGroup]="quizForm" (ngSubmit)="submitQuiz()">
-    <!-- 🟦 Información general -->
-    <div class="mb-8">
-      <h2 class="text-lg font-medium mb-3 border-b border-[var(--color-border)] pb-1">Información general</h2>
+  <!-- Toggle Manual / IA -->
+  <div class="flex items-center gap-2 mb-6">
+    <button type="button"
+            (click)="setMode(false)"
+            [class.bg-[var(--color-primary)]]="!useAI()"
+            [class.text-white]="!useAI()"
+            class="px-4 py-2 rounded-lg border border-[var(--color-border)] hover:opacity-90 transition">
+      Manual
+    </button>
+    <button type="button"
+            (click)="setMode(true)"
+            [class.bg-[var(--color-primary)]]="useAI()"
+            [class.text-white]="useAI()"
+            class="px-4 py-2 rounded-lg border border-[var(--color-border)] hover:opacity-90 transition">
+      IA (beta)
+    </button>
+  </div>
 
-      <label class="block mb-2 font-medium">Título del quiz</label>
-      <input
-        formControlName="title"
-        placeholder="Ej: Conocimientos de Python"
-        class="w-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-lg px-3 py-2 text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-      />
+  <!-- Form Manual -->
+  @if (!useAI()) {
+    <form [formGroup]="quizForm" (ngSubmit)="submitQuiz()">
+      <!-- 🟦 Información general -->
+      <div class="mb-8">
+        <h2 class="text-lg font-medium mb-3 border-b border-[var(--color-border)] pb-1">Información general</h2>
 
-      <label class="block mt-4 mb-2 font-medium">Descripción (opcional)</label>
-      <textarea
-        formControlName="description"
-        rows="3"
-        placeholder="Describe brevemente el propósito del quiz"
-        class="w-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-lg px-3 py-2 text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-      ></textarea>
-    </div>
+        <label class="block mb-2 font-medium">Título del quiz</label>
+        <input
+          formControlName="title"
+          placeholder="Ej: Conocimientos de Python"
+          class="w-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-lg px-3 py-2 text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+        />
 
-    <!-- 🟩 Categorías -->
-    <app-categories-editor [formArray]="categories"></app-categories-editor>
+        <label class="block mt-4 mb-2 font-medium">Descripción (opcional)</label>
+        <textarea
+          formControlName="description"
+          rows="3"
+          placeholder="Describe brevemente el propósito del quiz"
+          class="w-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-lg px-3 py-2 text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+        ></textarea>
+      </div>
 
-    <!-- 🟧 Preguntas -->
-    <app-questions-editor
-      class="block mt-8"
-      [formArray]="questions"
-      [categoryNames]="categoryNames">
-    </app-questions-editor>
+      <!-- 🟩 Categorías -->
+      <app-categories-editor
+        [formArray]="categories"
+        (removedCategory)="onCategoryRemoved($event)">
+      </app-categories-editor>
 
-    <!-- ⚙️ Botones -->
-    <div class="flex justify-between items-center pt-4 border-t border-[var(--color-border)] mt-8">
-      <button
-        type="button"
-        routerLink="/host/quizzes"
-        class="text-[var(--color-primary)] hover:underline font-medium"
-      >
-        Regresar
-      </button>
+      <!-- 🟧 Preguntas -->
+      <app-questions-editor
+        class="block mt-8"
+        [formArray]="questions"
+        [categoryNames]="categoryNames">
+      </app-questions-editor>
 
-      <button
-        type="submit"
-        [disabled]="loading()"
-        class="bg-[var(--color-primary)] text-white px-6 py-2 rounded-lg hover:opacity-90 transition"
-      >
-        {{ loading() ? 'Guardando...' : 'Guardar Quiz' }}
-      </button>
-    </div>
+      <!-- ⚙️ Botones -->
+      <div class="flex justify-between items-center pt-4 border-t border-[var(--color-border)] mt-8">
+        <button
+          type="button"
+          routerLink="/host/quizzes"
+          class="text-[var(--color-primary)] hover:underline font-medium"
+        >
+          Regresar
+        </button>
 
-    @if (error()) {
-      <p class="text-[var(--color-danger)] mt-3">{{ error() }}</p>
-    }
-    @if (success()) {
-      <p class="text-green-600 mt-3">✅ Quiz creado correctamente</p>
-    }
-  </form>
+        <button
+          type="submit"
+          [disabled]="loading()"
+          class="bg-[var(--color-primary)] text-white px-6 py-2 rounded-lg hover:opacity-90 transition"
+        >
+          {{ loading() ? 'Guardando...' : 'Guardar Quiz' }}
+        </button>
+      </div>
+
+      @if (error()) {
+        <p class="text-[var(--color-danger)] mt-3">{{ error() }}</p>
+      }
+      @if (success()) {
+        <p class="text-green-600 mt-3">✅ Quiz creado correctamente</p>
+      }
+    </form>
+  }
+
+  <!-- Panel IA -->
+  @if (useAI()) {
+    <app-ai-builder (generated)="loadPreviewFromAI($event)"></app-ai-builder>
+    <p class="text-sm text-[var(--color-muted)] mt-4">
+      Al generar con IA, se cargará un borrador editable en el formulario manual.
+    </p>
+  }
 </section>

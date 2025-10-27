@@ -23,8 +23,16 @@
         </span>
       }
     </div>
-  </div>
 
+    <button
+      type="button"
+      (click)="remove.emit()"
+      class="text-[var(--color-danger)] hover:underline inline-flex items-center gap-1"
+      title="Eliminar pregunta">
+      <mat-icon fontIcon="delete"></mat-icon>
+      Eliminar
+    </button>
+  </div>
 
   <!-- Contenido colapsable -->
   @if (!collapsed()) {
@@ -47,14 +55,12 @@
       }
     </select>
 
-    <!-- Uploader -->
     <!-- Uploader con preview -->
     <app-image-uploader
       (fileSelected)="onFileSelected($event)"
       [previewUrl]="previewUrl()"
       [filename]="previewName()">
     </app-image-uploader>
-
 
     <!-- Tipo -->
     <label class="block mb-1 font-medium">Tipo de pregunta</label>
@@ -66,6 +72,16 @@
       <option value="true_false">Falso / Verdadero</option>
       <option value="short_answer">Respuesta corta</option>
     </select>
+
+    <!-- Botón IA por pregunta -->
+    <div class="flex justify-end mb-2">
+      <button type="button"
+              (click)="generateExplanation()"
+              [disabled]="iaLoading() || !questionText"
+              class="text-xs px-3 py-1 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg)]">
+        {{ iaLoading() ? 'Generando…' : 'IA: Generar explicación' }}
+      </button>
+    </div>
 
     <!-- Respuesta corta -->
     @if (type === 'short_answer') {
@@ -88,6 +104,14 @@
       </app-answers-editor>
     }
 
+    <!-- Explicación editable -->
+    <label class="block mt-4 mb-2 font-medium text-sm">Explicación (editable)</label>
+    <textarea
+      formControlName="explanation"
+      rows="2"
+      placeholder="Explicación de la respuesta (opcional)"
+      class="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-bg)] text-[var(--color-muted)]"
+    ></textarea>
 
     <!-- Tiempo -->
     <app-time-limit-toggle class="mt-4" [group]="group"></app-time-limit-toggle>

@@ -1,16 +1,26 @@
 <div class="mb-8">
-  <div class="flex justify-between items-center mb-4">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
     <h2 class="text-lg font-medium">Preguntas</h2>
-    <button
-      type="button"
-      (click)="addQuestion()"
-      class="bg-[var(--color-primary)] text-white px-4 py-2 rounded-lg hover:opacity-90 transition"
-    >
-      + Añadir pregunta
-    </button>
+    <div class="flex gap-2">
+      <button
+        type="button"
+        (click)="generateExplanationsAll()"
+        [disabled]="genAllLoading() || formArray.length === 0"
+        class="border border-[var(--color-border)] px-3 py-2 rounded-lg hover:bg-[var(--color-bg-secondary)] transition text-sm"
+        title="Generar explicación IA para todas">
+        {{ genAllLoading() ? 'Generando…' : 'IA: Explicar todas' }}
+      </button>
+
+      <button
+        type="button"
+        (click)="addQuestion()"
+        class="bg-[var(--color-primary)] text-white px-4 py-2 rounded-lg hover:opacity-90 transition"
+      >
+        + Añadir pregunta
+      </button>
+    </div>
   </div>
 
-  <!-- SIN formArrayName aquí; pasamos cada FormGroup al hijo -->
   <div>
     @for (q of formArray.controls; track trackByIndex($index); let qIndex = $index) {
       <app-question-item

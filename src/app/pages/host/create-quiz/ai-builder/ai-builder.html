@@ -1,0 +1,101 @@
+<div class="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-2xl p-4">
+  <h2 class="text-lg font-medium mb-3">Crear con IA</h2>
+
+  <form [formGroup]="form" (ngSubmit)="$event.preventDefault(); generate()">
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="block mb-1 font-medium text-sm">Sugerencia de título (opcional)</label>
+        <input formControlName="title_hint"
+               placeholder="Ej: Historia de México — Época Colonial"
+               class="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-bg)] text-[var(--color-muted)]">
+      </div>
+
+      <div>
+        <label class="block mb-1 font-medium text-sm">Número de preguntas</label>
+        <input type="number" min="1" max="50"
+               formControlName="num_questions"
+               class="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-bg)] text-[var(--color-muted)]">
+      </div>
+
+      <div>
+        <label class="block mb-1 font-medium text-sm">Dificultad</label>
+        <select formControlName="difficulty"
+                class="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-bg)] text-[var(--color-muted)]">
+          <option value="easy">Fácil</option>
+          <option value="normal">Normal</option>
+          <option value="hard">Difícil</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block mb-1 font-medium text-sm">Categorías (opcional, separadas por coma)</label>
+        <input formControlName="categories"
+               placeholder="Ej: Álgebra, Cálculo, Geometría"
+               class="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-bg)] text-[var(--color-muted)]">
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block mb-1 font-medium text-sm">Instrucciones / tema</label>
+        <textarea rows="4" formControlName="instructions"
+                  placeholder="Describe aquí el tema o pega contenido del que generar preguntas"
+                  class="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 bg-[var(--color-bg)] text-[var(--color-muted)]"></textarea>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <label class="inline-flex items-center gap-2 text-sm">
+        <input type="checkbox" formControlName="include_explanations" class="accent-[var(--color-primary)]">
+        Incluir explicaciones
+      </label>
+    </div>
+
+    <div class="mt-3">
+      <label class="block mb-1 font-medium text-sm">Tipos permitidos</label>
+      <div class="flex flex-wrap gap-4 text-sm">
+        <label class="inline-flex items-center gap-2">
+          <input type="checkbox" formControlName="types_multiple_choice" class="accent-[var(--color-primary)]">
+          Opción múltiple
+        </label>
+        <label class="inline-flex items-center gap-2">
+          <input type="checkbox" formControlName="types_true_false" class="accent-[var(--color-primary)]">
+          Verdadero/Falso
+        </label>
+        <label class="inline-flex items-center gap-2">
+          <input type="checkbox" formControlName="types_short_answer" class="accent-[var(--color-primary)]">
+          Respuesta corta
+        </label>
+      </div>
+    </div>
+
+    <div class="mt-5">
+      <label class="block mb-1 font-medium text-sm">Archivos (opcional)</label>
+      <input type="file" multiple (change)="onFileChange($event)"
+             class="block w-full text-sm file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-[var(--color-primary)] file:text-white
+                    hover:file:opacity-90" />
+      @if (files.length) {
+        <ul class="mt-2 text-sm text-[var(--color-muted)] space-y-1">
+          @for (f of files; track f.name; let i = $index) {
+            <li class="flex items-center justify-between">
+              <span>{{ f.name }}</span>
+              <button type="button" (click)="removeFile(i)" class="text-[var(--color-danger)] hover:underline">Quitar</button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <div class="mt-6 flex items-center gap-3">
+      <button type="submit"
+              [disabled]="loading()"
+              class="bg-[var(--color-primary)] text-white px-5 py-2 rounded-lg hover:opacity-90 transition">
+        {{ loading() ? 'Generando…' : 'Generar con IA' }}
+      </button>
+      @if (error()) {
+        <span class="text-[var(--color-danger)] text-sm">{{ error() }}</span>
+      }
+    </div>
+  </form>
+</div>

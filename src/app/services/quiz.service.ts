@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpEventType } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { environment } from '../../environment/environment';
 
@@ -45,6 +45,31 @@ export interface QuizFull {
   questions: QuizQuestion[];
 }
 
+/** ==== IA payloads ==== */
+export type Difficulty = 'easy' | 'normal' | 'hard';
+
+export interface AIQuizParams {
+  title_hint?: string | null;
+  instructions?: string | null;
+  num_questions?: number; // 1..50
+  difficulty?: Difficulty; // default normal
+  categories?: string[] | null;
+  include_explanations?: boolean;
+  allowed_types?: Array<'multiple_choice' | 'true_false' | 'short_answer'> | null;
+  persist?: boolean;
+}
+
+export interface ExplainAnswer {
+  answer_text: string;
+  is_correct: boolean;
+}
+export interface ExplainQuestionIn {
+  question_text: string;
+  question_type: 'multiple_choice' | 'true_false' | 'short_answer';
+  answers?: ExplainAnswer[] | null;
+  correct_text?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class QuizService {
   private http = inject(HttpClient);
@@ -68,5 +93,31 @@ export class QuizService {
   // 🆕 detalle
   async getQuiz(id: number): Promise<QuizFull> {
     return await lastValueFrom(this.http.get<QuizFull>(`${this.base}/${id}`));
+  }
+
+  // =============== IA endpoints ===============
+
+  /** Genera un preview de quiz con IA (no persiste) */
+  async aiGenerateQuiz(params: AIQuizParams, files: File[] = []): Promise<QuizPayload> {
+    const fd = new FormData();
+    fd.append('params', JSON.stringify(params || {}));
+    for (const f of files) fd.append('files', f, f.name);
+
+    return await lastValueFrom(this.http.post<QuizPayload>(`${this.base}/ai/generate`, fd));
+  }
+
+  /** Explica una sola pregunta */
+  async aiExplainQuestion(input: ExplainQuestionIn): Promise<{ explanation: string }> {
+    return await lastValueFrom(
+      this.http.post<{ explanation: string }>(`${this.base}/ai/explain/question`, input)
+    );
+  }
+
+  /** Explica varias preguntas (mismo orden) */
+  async aiExplainBatch(inputs: ExplainQuestionIn[]): Promise<string[]> {
+    const res = await lastValueFrom(
+      this.http.post<{ explanations: string[] }>(`${this.base}/ai/explain/quiz`, { questions: inputs })
+    );
+    return res.explanations ?? [];
   }
 }
