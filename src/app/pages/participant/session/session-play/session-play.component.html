@@ -1,0 +1,90 @@
+<section
+  class="min-h-screen flex flex-col items-center justify-center p-6 
+         bg-gradient-to-br from-[var(--color-bg)] to-[#93c5fd] via-[#93c5fd]"
+>
+  @if (currentQuestion(); as q) {
+    <div
+      class="w-full max-w-3xl bg-[var(--color-bg)] shadow-xl rounded-2xl p-8 
+             border border-[var(--color-border)] transition-all"
+    >
+      <!-- Encabezado -->
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-extrabold text-[var(--color-text)]">
+          Pregunta número {{ session.currentQuestionIndex() + 1 }}
+        </h2>
+
+        <div class="flex items-center gap-2 text-[var(--color-danger)] font-semibold">
+          <span class="material-icons">timer</span>
+          <span>
+            @if (timeLeft() > 0) {
+              {{ timeLeft() | number: '2.0' }}s
+            } @else {
+              <span>∞</span>
+            }
+          </span>
+        </div>
+      </div>
+
+      <!-- Texto de la pregunta -->
+      <h1 class="text-3xl font-bold mb-6 text-center text-[var(--color-text)]">
+        {{ q.question_text }}
+      </h1>
+
+      <!-- Imagen (si existe) -->
+      @if (q.image_url) {
+        <img
+          [src]="q.image_url"
+          alt="imagen"
+          class="w-full max-h-64 object-contain rounded-xl mb-6 mx-auto border border-[var(--color-border)]"
+        />
+      }
+
+      <!-- Opciones -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        @for (ans of q.answers; track ans.answer_id) {
+          <button
+            (click)="submit(ans.answer_id)"
+            class="p-4 text-lg font-medium rounded-xl border-2 transition-all duration-200
+                   hover:scale-[1.02]
+                   bg-[var(--color-bg-secondary)] hover:bg-[var(--color-primary)] 
+                   hover:text-white text-[var(--color-text)]
+                   disabled:opacity-60"
+            [class.bg-[var(--color-primary)]]="selectedAnswer() === ans.answer_id"
+            [class.text-white]="selectedAnswer() === ans.answer_id"
+            [disabled]="!!selectedAnswer() || isHost()"
+          >
+            {{ ans.answer_text }}
+          </button>
+        }
+      </div>
+
+      <!-- Botón solo para el host -->
+      @if (isHost()) {
+        <div class="mt-8 text-center">
+          <button
+            (click)="nextQuestion()"
+            class="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] 
+                   text-white px-6 py-3 rounded-xl font-semibold shadow-sm transition"
+          >
+            Pasar a la siguiente pregunta →
+          </button>
+        </div>
+      } @else {
+        <!-- Avatar y nombre -->
+        <div class="mt-10 flex justify-center items-center gap-4 text-[var(--color-muted)] text-sm">
+          <img
+            [src]="getAvatar()"
+            class="w-10 h-10 rounded-full border border-[var(--color-border)] shadow-sm"
+            alt="avatar"
+          />
+          <span>{{ session.nickname() || 'Tú' }}</span>
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- Estado de espera -->
+    <div class="text-center mt-20 text-[var(--color-text)] animate-pulse">
+      Esperando inicio del quiz...
+    </div>
+  }
+</section>

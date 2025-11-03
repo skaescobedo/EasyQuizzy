@@ -1,0 +1,111 @@
+<section class="min-h-screen bg-gradient-to-br from-[var(--color-bg)] to-[#93c5fd] via-[#93c5fd] flex flex-col items-center p-8">
+  <!-- Título -->
+  <div class="text-center mb-8">
+    <h1 class="text-3xl font-bold text-[var(--color-text)]">Prepárate para comenzar</h1>
+    <p class="text-[var(--color-text)]">
+      Los participantes se están uniendo a “{{ quizTitle() || '...' }}”
+    </p>
+  </div>
+
+  <!-- Layout principal -->
+  <div class="flex flex-col lg:flex-row gap-8 w-full max-w-6xl">
+    <!-- LADO IZQUIERDO: QR y código -->
+    <div
+      class="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-2xl p-6 flex flex-col items-center justify-between shadow-md w-full lg:w-1/3"
+    >
+      <div class="text-center">
+        <h3 class="text-lg font-semibold mb-3">Únete a la actividad</h3>
+
+        <!-- QR generado -->
+        <div class="flex justify-center mb-3">
+          <qrcode
+            [qrdata]="joinUrl"
+            [width]="180"
+            [errorCorrectionLevel]="'M'"
+          ></qrcode>
+        </div>
+
+
+        <!-- Código grande -->
+        <p class="text-3xl font-mono font-semibold tracking-wider mb-1">{{ code() }}</p>
+        <p class="text-sm text-[var(--color-muted)]">
+          Introduce este código en
+          <span class="font-medium">{{ domainUrl }}</span>
+        </p>
+      </div>
+      <!-- Input de URL copiable -->
+    <div class="mt-4 w-full">
+      <div
+        class="flex w-full border border-[var(--color-border)] rounded-xl overflow-hidden shadow-sm"
+      >
+        <input
+          type="text"
+          readonly
+          class="flex-grow px-3 py-3 text-sm bg-[var(--color-bg-secondary)] outline-none text-[var(--color-text)]"
+          [value]="joinUrl"
+        />
+        <button
+          class="px-4 py-3 bg-[var(--color-primary)] text-white text-sm cursor-copy hover:bg-[var(--color-primary-hover)] transition w-20"
+          (click)="copyLink()"
+        >
+          Copiar
+        </button>
+      </div>
+    </div>
+
+
+      <!-- Botones de acción -->
+      <div class="mt-8 w-full flex flex-col gap-3">
+        <!-- Botón principal -->
+        <button
+          (click)="startQuiz()"
+          class="w-full bg-[var(--color-primary)] text-white py-3 rounded-xl font-semibold hover:bg-[var(--color-primary-hover)] transition disabled:opacity-50"
+          [disabled]="participants().length === 0"
+        >
+          🚀 Comenzar actividad
+        </button>
+
+        <!-- Botón cancelar -->
+        <button
+          (click)="endSession()"
+          class="w-full bg-[var(--color-bg-secondary)] text-[var(--color-danger)] border border-[var(--color-border)] py-3 rounded-xl font-semibold hover:bg-red-50 transition"
+        >
+          ❌ Cancelar actividad
+        </button>
+      </div>
+    </div>
+
+    <!-- LADO DERECHO: Participantes -->
+    <div
+      class="flex-1 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-2xl shadow-md p-8"
+    >
+      <h2 class="text-xl font-semibold flex items-center justify-between mb-6">
+        <span>Participantes conectados:</span>
+        <span class="text-[var(--color-primary)] font-bold">{{ participants().length }}</span>
+      </h2>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+        @for (p of participants(); track p.nickname) {
+          <div class="flex flex-col items-center">
+            <img
+              [src]="getAvatar(p)"
+              class="w-16 h-16 rounded-full border border-[var(--color-border)] shadow-sm bg-[var(--color-bg-secondary)]"
+              alt="avatar"
+            />
+            <p class="mt-2 text-sm font-medium text-center truncate w-20">{{ p.nickname }}</p>
+          </div>
+        }
+
+        <!-- Placeholder -->
+        <div class="flex flex-col items-center opacity-50">
+          <div
+            class="w-16 h-16 rounded-full border-2 border-dashed border-[var(--color-border)] flex items-center justify-center"
+          >
+            <span class="material-icons text-[var(--color-muted)]">person_add</span>
+          </div>
+          <p class="mt-2 text-sm">Esperando...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
