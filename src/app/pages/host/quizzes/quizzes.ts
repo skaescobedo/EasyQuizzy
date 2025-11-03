@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 
 import { QuizService, QuizListItem } from '../../../services/quiz.service';
 import { QuizCard } from './quiz-card/quiz-card';
+import { environment } from '../../../../environment/environment';
+import { Router } from '@angular/router';
+import { SessionService } from '../../../services/session.service';
 
 @Component({
   selector: 'app-host-quizzes',
@@ -13,6 +16,8 @@ import { QuizCard } from './quiz-card/quiz-card';
 })
 export class HostQuizzes {
   private api = inject(QuizService);
+  private sessionService = inject(SessionService);
+  private router = inject(Router);
 
   items = signal<QuizListItem[]>([]);
   loading = signal(false);
@@ -47,4 +52,19 @@ export class HostQuizzes {
   }
 
   trackById = (_: number, q: QuizListItem) => q.quiz_id;
+
+// ==============================================================
+  // 🚀 Crear sesión en vivo (desde el botón del quiz-card)
+  // ==============================================================
+  async createLiveSession(quizId: number) {
+    try {
+      this.loading.set(true);
+      await this.sessionService.createSession(quizId);
+      this.router.navigate(['/host/session-host']);
+    } catch (err: any) {
+      this.error.set(err.message || 'Error al crear la sesión.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
 }

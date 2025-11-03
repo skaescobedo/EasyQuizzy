@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
@@ -13,4 +13,5 @@ import { QuizListItem } from '../../../../services/quiz.service';
 })
 export class QuizCard {
   @Input({ required: true }) quiz!: QuizListItem;
+  @Output() createSession = new EventEmitter<number>();
 }

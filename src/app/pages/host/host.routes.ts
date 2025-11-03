@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { HostLayoutComponent } from './host-layout.component';
 import { HostHomeComponent } from './home/host-home.component';
 import { CreateQuizComponent } from './create-quiz/create-quiz.component';
+import { SessionHostComponent } from './session/session-host/session-host.component';
+import { QuizPlayComponent } from '../participant/session/session-play/session-play.component';
 
 export const hostRoutes: Routes = [
   {
@@ -15,4 +17,12 @@ export const hostRoutes: Routes = [
       { path: 'quizzes/:id', loadComponent: () => import('./quizzes/quiz-viewer/quiz-viewer').then(m => m.QuizViewer) },
     ],
   },
+  {
+    path: 'session-host',
+    component: SessionHostComponent
+  },
+  {
+    path: 'play',
+    component: QuizPlayComponent
+  }
 ];

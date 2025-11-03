@@ -2,12 +2,6 @@ import { Component, EventEmitter, Output, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../services/auth.service';
-import {
-  trigger,
-  transition,
-  style,
-  animate,
-} from '@angular/animations';
 
 @Component({
   selector: 'app-sidebar',
@@ -78,32 +72,6 @@ import {
     </div>
   `,
   styleUrls: ['./sidebar.component.scss'],
-  animations: [
-    trigger('fadeInOut', [
-      transition(':enter', [
-        style({ opacity: 0 }),
-        animate('150ms ease-out', style({ opacity: 1 })),
-      ]),
-      transition(':leave', [
-        animate('120ms ease-in', style({ opacity: 0 })),
-      ]),
-    ]),
-    trigger('slideInOut', [
-      transition(':enter', [
-        style({ transform: 'translateX(-100%)', opacity: 0.6 }),
-        animate(
-          '180ms cubic-bezier(0.22, 1, 0.36, 1)',
-          style({ transform: 'translateX(0)', opacity: 1 })
-        ),
-      ]),
-      transition(':leave', [
-        animate(
-          '150ms ease-in',
-          style({ transform: 'translateX(-100%)', opacity: 0 })
-        ),
-      ]),
-    ]),
-  ],
 })
 export class SidebarComponent {
   @Output() close = new EventEmitter<void>();

@@ -1,0 +1,71 @@
+<section class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[var(--color-bg)] to-[#93c5fd] via-[#93c5fd] p-6">
+  <div class="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-2xl shadow-xl p-8 max-w-md w-full">
+    <h1 class="text-2xl font-bold text-center mb-6 text-[var(--color-text)]">
+      ¡Únete a la actividad!
+    </h1>
+
+    @if (error()) {
+      <div class="mb-4 p-3 text-sm text-[var(--color-danger)] border border-[var(--color-danger)] rounded-lg bg-red-50">
+        {{ error() }}
+      </div>
+    }
+
+    <!-- Solo mostrar el input del código si no viene en la URL -->
+    @if (showCodeInput()) {
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1 text-[var(--color-text)]">Código de sesión</label>
+        <input
+          [(ngModel)]="sessionCode"
+          type="text"
+          maxlength="6"
+          placeholder="Ej. A1B2C3"
+          class="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--color-primary)] outline-none uppercase placeholder-gray-400"
+        />
+      </div>
+    }
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1 text-[var(--color-text)]">Tu nombre</label>
+      <input
+        [(ngModel)]="nickname"
+        type="text"
+        placeholder="Ingresa tu nombre"
+        class="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 
+              focus:ring-2 focus:ring-[var(--color-primary)] outline-none 
+              placeholder-gray-400"
+      />
+    </div>
+
+    <div class="mb-6">
+      <p class="text-sm font-medium mb-3 text-[var(--color-text)] text-center">Elige tu avatar</p>
+      <div class="grid grid-cols-4 sm:grid-cols-6 gap-3 justify-center">
+        @for (avatar of avatars; track avatar) {
+          <div
+            (click)="selectAvatar(avatar)"
+            class="relative w-14 h-14 flex items-center justify-center cursor-pointer rounded-full transition transform hover:scale-110"
+          >
+            <img
+              [src]="avatar"
+              alt="avatar"
+              class="w-full h-full rounded-full border-2 border-transparent transition"
+              [class.border-[var(--color-primary)]]="selectedAvatar() === avatar"
+            />
+            @if (selectedAvatar() === avatar) {
+              <div
+                class="absolute inset-0 rounded-full border-4 border-[var(--color-primary)] shadow-lg animate-pulse"
+              ></div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <button
+      (click)="joinSession()"
+      [disabled]="loading()"
+      class="w-full bg-[var(--color-primary)] text-white py-3 rounded-xl font-semibold hover:bg-[var(--color-primary-hover)] transition disabled:opacity-50"
+    >
+      {{ loading() ? 'Uniéndote...' : 'Unirse' }}
+    </button>
+  </div>
+</section>
