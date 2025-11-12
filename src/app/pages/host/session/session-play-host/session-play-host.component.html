@@ -1,0 +1,197 @@
+<section
+  class="min-h-screen flex flex-col items-center justify-center p-6 
+         bg-gradient-to-br from-[var(--color-bg)] to-[#93c5fd] via-[#93c5fd]"
+>
+  @if (currentQuestion(); as q) {
+    <div
+      class="w-full max-w-3xl bg-[var(--color-bg)] shadow-xl rounded-2xl p-8 
+             border border-[var(--color-border)] transition-all"
+    >
+      <!-- ========================================================= -->
+      <!-- 🔹 MOSTRAR PREGUNTA Y TEMPORIZADOR SOLO SI NO SE MUESTRAN LOS SCORES -->
+      <!-- ========================================================= -->
+      @if (!showScores() && !quizEnded()) {
+        <!-- Encabezado -->
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-extrabold text-[var(--color-text)]">
+            Pregunta número {{ session.currentQuestionIndex() + 1 }}
+          </h2>
+
+          <div class="flex items-center gap-2 text-[var(--color-danger)] font-semibold">
+            <span class="material-icons">timer</span>
+            <span>
+              @if (timeLeft() > 0) {
+                {{ timeLeft() | number: '2.0' }}s
+              } @else {
+                <span>∞</span>
+              }
+            </span>
+          </div>
+        </div>
+
+        <!-- Texto de la pregunta -->
+        <h1 class="text-3xl font-bold mb-6 text-center text-[var(--color-text)]">
+          {{ q.question_text }}
+        </h1>
+
+        <!-- Imagen (si existe) -->
+        @if (q.image_url) {
+          <img
+            [src]="q.image_url"
+            alt="imagen"
+            class="w-full max-h-64 object-contain rounded-xl mb-6 mx-auto border border-[var(--color-border)]"
+          />
+        }
+
+        <!-- Opciones (solo para mostrar al host, deshabilitadas) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          @for (ans of q.answers; track ans.answer_id) {
+            <button
+              class="p-4 text-lg font-medium rounded-xl border-transparent transition-all duration-200
+                     bg-[var(--color-bg-secondary)] text-[var(--color-text)]"
+              disabled
+            >
+              {{ ans.answer_text }}
+            </button>
+          }
+        </div>
+
+        <!-- Botón de terminar -->
+        <div class="text-center mt-8 flex flex-col sm:flex-row justify-center gap-4">
+          <button
+            (click)="endQuestion()"
+            class="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] 
+                   text-white px-8 py-3 rounded-xl font-semibold shadow-md transition cursor-pointer flex items-center justify-center gap-2"
+          >
+            <span class="material-icons">stop_circle</span>
+            Terminar pregunta
+          </button>
+        </div>
+
+      } @else if (showScores() && !quizEnded()) {
+        <!-- ========================================================= -->
+        <!-- 🏆 TABLERO DE PUNTUACIONES INTERMEDIAS -->
+        <!-- ========================================================= -->
+        <div class="mt-6 text-center">
+          <h3 class="text-2xl font-bold text-[var(--color-primary)] mb-6 flex items-center justify-center gap-2">
+            <span class="material-icons text-[var(--color-primary)] text-3xl">leaderboard</span>
+            Puntuaciones actuales
+          </h3>
+
+          <ul
+            class="divide-y divide-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-xl shadow-inner"
+          >
+            @for (p of rankedParticipants(); track p.nickname; let i = $index) {
+              <li class="py-3 px-6 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                  <span class="font-bold w-6 text-[var(--color-text)] text-center">
+                    {{ i + 1 }}.
+                  </span>
+                  <img
+                    [src]="p.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
+                    class="w-10 h-10 rounded-full border border-[var(--color-border)] shadow-sm"
+                  />
+                  <span class="font-semibold text-[var(--color-text)]">{{ p.nickname }}</span>
+                </div>
+                <span class="font-bold text-[var(--color-primary)]">
+                  {{ p.score || 0 }}
+                </span>
+              </li>
+            }
+          </ul>
+
+
+          <div class="text-center mt-8 flex flex-col sm:flex-row justify-center gap-4">
+            <button
+              (click)="nextQuestion()"
+              class="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] 
+                     text-white px-6 py-3 rounded-xl font-semibold shadow-md transition cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span class="material-icons">arrow_forward</span>
+              Siguiente pregunta
+            </button>
+
+            <button
+              (click)="finishQuiz()"
+              class="bg-[var(--color-danger)] hover:bg-red-600 
+                     text-white px-6 py-3 rounded-xl font-semibold shadow-md transition cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span class="material-icons">flag</span>
+              Finalizar quiz
+            </button>
+          </div>
+        </div>
+
+      } @else if (quizEnded()) {
+        <!-- ========================================================= -->
+        <!-- 🎉 RESULTADOS FINALES -->
+        <!-- ========================================================= -->
+        <div class="mt-6 text-center">
+          <h3 class="text-3xl font-bold text-[var(--color-primary)] mb-6 flex items-center justify-center gap-2">
+            <span class="material-icons text-[var(--color-primary)] text-4xl">emoji_events</span>
+            Resultados Finales
+          </h3>
+
+          <ul
+            class="divide-y divide-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-xl shadow-inner mb-8"
+          >
+            @for (p of rankedParticipants(); track p.nickname; let i = $index) {
+              <li class="py-4 px-6 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                  <span class="font-bold w-6 text-[var(--color-text)] text-center">
+                    {{ i + 1 }}.
+                  </span>
+
+                  <!-- Trofeos para top 3 -->
+                  @if (i === 0) {
+                    <span class="material-icons text-yellow-500">emoji_events</span>
+                  } @else if (i === 1) {
+                    <span class="material-icons text-gray-400">emoji_events</span>
+                  } @else if (i === 2) {
+                    <span class="material-icons text-amber-700">emoji_events</span>
+                  }
+
+                  <img
+                    [src]="p.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
+                    class="w-10 h-10 rounded-full border border-[var(--color-border)] shadow-sm"
+                    alt="avatar"
+                  />
+                  <span class="font-semibold text-[var(--color-text)]">{{ p.nickname }}</span>
+                </div>
+                <span class="font-bold text-[var(--color-primary)] text-lg">
+                  {{ p.score || 0 }} pts
+                </span>
+              </li>
+            }
+          </ul>
+
+
+          <div class="text-center flex flex-col sm:flex-row justify-center gap-4">
+            <button
+              (click)="viewDetailedResults()"
+              class="bg-[var(--color-primary)] cursor-pointer hover:bg-[var(--color-primary-hover)] 
+                     text-white px-6 py-3 rounded-xl font-semibold shadow-md transition flex items-center justify-center gap-2"
+            >
+              <span class="material-icons">insights</span>
+              Ver resultados detallados
+            </button>
+
+            <button
+              (click)="goHome()"
+              class="bg-[var(--color-success)] cursor-pointer hover:bg-green-600 
+                     text-white px-6 py-3 rounded-xl font-semibold shadow-md transition flex items-center justify-center gap-2"
+            >
+              <span class="material-icons">home</span>
+              Volver al inicio
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- Estado de espera -->
+    <div class="text-center mt-20 text-[var(--color-text)] animate-pulse">
+      Esperando inicio del quiz...
+    </div>
+  }
+</section>

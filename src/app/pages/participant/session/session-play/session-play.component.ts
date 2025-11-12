@@ -1,86 +1,150 @@
 import { Component, inject, signal, computed, effect } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { SessionService } from "../../../../services/session.service";
+import { FormsModule } from "@angular/forms";
+import { Router } from "@angular/router";
 
 @Component({
   standalone: true,
-  selector: "app-quiz-play",
-  imports: [CommonModule],
+  selector: "app-session-play",
+  imports: [CommonModule, FormsModule],
   templateUrl: "./session-play.component.html",
 })
-export class QuizPlayComponent {
+export class SessionPlayComponent {
   session = inject(SessionService);
 
-  // === Estado local ===
-  timeLeft = signal<number>(0);
-  timerRunning = signal<boolean>(false);
   selectedAnswer = signal<number | null>(null);
+  showFeedback = signal(false);
+  isSubmitted = signal(false);
+  timeLeft = signal<number>(0);
+  shortAnswer = "";
   startTime = 0;
+  router = inject(Router);
 
-  // === Computed ===
+  quizEnded = signal(false);
+  participants = this.session.participants;
+  totalScore = signal<number>(0);
+
+  joinCode = "";
+  showJoinInput = signal(false);
+
   currentQuestion = computed(() => {
     const index = this.session.currentQuestionIndex();
     return this.session.questions()[index];
   });
 
-  isHost = computed(() => this.session.role() === "host");
+  rankedParticipants = computed(() =>
+    [...this.participants()].sort((a, b) => (b.score || 0) - (a.score || 0))
+  );
 
   constructor() {
-    // Efecto reactivo: cada vez que cambia la pregunta, reinicia temporizador
+    // Cuando se acaba una pregunta
+    this.session.on("end_question", () => {
+      this.autoSubmitIfNeeded();
+      this.showFeedback.set(true);
+      this.timeLeft.set(0);
+    });
+
+    // Cuando el host termina el quiz
+    this.session.on("quiz_ended", async () => {
+      this.quizEnded.set(true);
+      const id = this.session.sessionId();
+      if (id) {
+        const scores = await this.session.fetchScores(id);
+        this.participants.set(scores);
+
+        const myName = this.session.nickname();
+        const me = scores.find((p) => p.nickname === myName);
+        this.totalScore.set(me?.score || 0);
+      }
+    });
+
+    // Reinicia selección por pregunta
     effect(() => {
       const q = this.currentQuestion();
-      if (q) this.startTimer(q.time_limit_sec || 0);
+      if (q && !this.quizEnded()) {
+        this.resetQuestion();
+        this.startTimer(q.time_limit_sec || 0);
+      }
     });
   }
 
-  // 🔹 Inicia o reinicia el temporizador
+  resetQuestion() {
+    this.selectedAnswer.set(null);
+    this.showFeedback.set(false);
+    this.isSubmitted.set(false);
+    this.shortAnswer = "";
+  }
+
+  // Temporizador
   startTimer(seconds: number) {
     clearInterval((this as any)._interval);
     this.startTime = Date.now();
+    if (seconds <= 0) return;
 
-    if (seconds > 0) {
-      this.timeLeft.set(seconds);
-      this.timerRunning.set(true);
-      (this as any)._interval = setInterval(() => {
-        const newTime = this.timeLeft() - 1;
-        this.timeLeft.set(newTime);
-        if (newTime <= 0) {
-          clearInterval((this as any)._interval);
-          this.timerRunning.set(false);
-          if (!this.isHost()) this.autoSubmit();
-        }
-      }, 1000);
-    } else {
-      this.timeLeft.set(0);
-      this.timerRunning.set(false);
-    }
+    this.timeLeft.set(seconds);
+    (this as any)._interval = setInterval(() => {
+      const newTime = this.timeLeft() - 1;
+      this.timeLeft.set(newTime);
+      if (newTime <= 0) clearInterval((this as any)._interval);
+    }, 1000);
   }
 
-  // 🔹 Enviar respuesta manual o automática
-  submit(answerId: number) {
-    if (this.selectedAnswer()) return; // prevenir doble clic
+  selectAnswer(id: number) {
+    if (this.showFeedback()) return;
+    this.selectedAnswer.set(id);
+  }
 
-    this.selectedAnswer.set(answerId);
-    const elapsed = Date.now() - this.startTime; // ⏱ tiempo que tardó
+  submit() {
+    if (this.isSubmitted()) return;
+    this.autoSubmitIfNeeded();
+  }
+
+  autoSubmitIfNeeded() {
+    if (this.isSubmitted()) return;
+
     const q = this.currentQuestion();
     if (!q) return;
+    const elapsed = Date.now() - this.startTime;
 
-    // Se manda la respuesta
-    this.session.submitAnswer(q.question_id, answerId, false, elapsed);
+    if (q.question_type === "short_answer" && this.shortAnswer.trim()) {
+      this.session.submitAnswer(q.question_id, null, elapsed, this.shortAnswer.trim());
+    } else if (this.selectedAnswer()) {
+      this.session.submitAnswer(q.question_id, this.selectedAnswer(), elapsed);
+    } else {
+      this.session.submitAnswer(q.question_id, null, elapsed, "");
+    }
+
+    this.isSubmitted.set(true);
   }
 
-  autoSubmit() {
-    console.warn("⏰ Tiempo agotado, enviando sin respuesta...");
-    this.submit(-1);
-  }
-
-  nextQuestion() {
-    const nextIndex = this.session.currentQuestionIndex() + 1;
-    this.session.send("next_question", { index: nextIndex });
-    this.session.currentQuestionIndex.set(nextIndex);
+  isCorrectAnswer(ansId: number) {
+    const q = this.currentQuestion();
+    return !!q?.answers.find((a) => a.answer_id === ansId && a.is_correct);
   }
 
   getAvatar() {
-    return this.session.avatarUrl() || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+    return (
+      this.session.avatarUrl() ||
+      "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+    );
+  }
+
+  // 🔁 Mostrar input para unirse a otro quiz
+  reloadQuiz() {
+    this.showJoinInput.set(true);
+  }
+
+  // 🔢 Unirse con nuevo código
+  joinNewQuiz() {
+    const code = this.joinCode.trim().toUpperCase();
+    if (!code) return;
+    this.router.navigate(['/quizz', code]);
+  }
+
+  // 🏠 Ir a inicio de EasyQuizzy
+  goHome() {
+    this.session.disconnect();
+    window.location.href = "/"; // o router.navigate(['/inicio'])
   }
 }

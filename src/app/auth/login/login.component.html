@@ -5,8 +5,13 @@
     <p>No necesitas cuenta</p>
 
     <div class="join-box">
-      <input type="text" placeholder="# Ingresa el código del quiz" />
-      <button class="cursor-pointer">
+      <input type="text" 
+        [(ngModel)]="joinCode"
+        (keyup.enter)="joinQuiz()"
+        placeholder="# Ingresa el código del quiz"
+        maxlength="6"
+      />
+      <button (click)="joinQuiz()" class="cursor-pointer">
         <mat-icon fontIcon="arrow_forward"></mat-icon>
       </button>
     </div>

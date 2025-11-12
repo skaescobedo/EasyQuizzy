@@ -2,8 +2,7 @@ import { Routes } from '@angular/router';
 import { HostLayoutComponent } from './host-layout.component';
 import { HostHomeComponent } from './home/host-home.component';
 import { CreateQuizComponent } from './create-quiz/create-quiz.component';
-import { SessionHostComponent } from './session/session-host/session-host.component';
-import { QuizPlayComponent } from '../participant/session/session-play/session-play.component';
+import { SessionHostComponent } from './session/session-host/session-host.component';import { SessionPlayHostComponent } from './session/session-play-host/session-play-host.component';
 
 export const hostRoutes: Routes = [
   {
@@ -23,6 +22,6 @@ export const hostRoutes: Routes = [
   },
   {
     path: 'play',
-    component: QuizPlayComponent
-  }
+    component: SessionPlayHostComponent
+  },
 ];
