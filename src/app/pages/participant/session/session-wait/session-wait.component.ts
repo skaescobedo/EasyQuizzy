@@ -40,6 +40,7 @@ export class SessionWaitComponent {
   }
 
   leaveSession() {
+    this.session.clearLocalSession();
     this.session.disconnect();
     this.router.navigate(['/']);
   }

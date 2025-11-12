@@ -176,27 +176,70 @@ export class SessionService {
     }
   }
 
-  submitAnswer(questionId: number, answerId: number, isCorrect: boolean, timeMs: number) {
+  submitAnswer(questionId: number, answerId: number | null, responseTimeMs: number, shortAnswer?: string) {
     const participantId = localStorage.getItem('participant_id');
-    this.send('submit_answer', {
-      participant_id: participantId,
+    this.send("submit_answer", {
       question_id: questionId,
       answer_id: answerId,
-      is_correct: isCorrect,
-      response_time_ms: timeMs,
+      response_time_ms: responseTimeMs,
+      short_answer: shortAnswer ?? null,
+      participant_id: participantId,
     });
+  }
+
+
+  // =======================================================
+  // 📡 Sistema de listeners para eventos WS dinámicos
+  // =======================================================
+  private listeners = new Map<string, ((data?: any) => void)[]>();
+
+  on(event: string, callback: (data?: any) => void) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
+    }
+    this.listeners.get(event)!.push(callback);
+  }
+
+  off(event: string, callback: (data?: any) => void) {
+    const arr = this.listeners.get(event);
+    if (!arr) return;
+    this.listeners.set(
+      event,
+      arr.filter(fn => fn !== callback)
+    );
+  }
+
+  // 🔹 Método para disparar los listeners cuando llega un evento
+  private emit(event: string, data?: any) {
+    const arr = this.listeners.get(event);
+    if (arr) {
+      arr.forEach(fn => {
+        try {
+          fn(data);
+        } catch (err) {
+          console.error(`Error en listener '${event}'`, err);
+        }
+      });
+    }
   }
 
   // =======================================================
   // 📩 Manejador de mensajes
   // =======================================================
   private handleMessage(msg: any) {
+    this.emit(msg.event, msg);
+
     switch (msg.event) {
       case 'update_participants':
         this.participants.set(msg.players || []);
         break;
       case 'quiz_started':
         this.fetchQuiz(this.sessionId()!);
+        break;
+      case 'next_question':
+        const index = msg.index;
+        console.log('➡️ Cambiando a pregunta:', index);
+        this.currentQuestionIndex.set(index);
         break;
       case 'session_closed':
         alert('❌ La sesión fue finalizada por el host.');
@@ -215,9 +258,14 @@ export class SessionService {
 
     this.quizTitle.set(quiz!.title);
     this.questions.set(quiz!.questions);
+    console.log(quiz);
     return quiz!;
   }
 
+  async fetchScores(sessionId: number): Promise<any[]> {
+    const res = await this.http.get<any[]>(`${this.apiUrl}/${sessionId}/scores`).toPromise();
+    return res || [];
+  }
 
   async endSession() {
     const id = this.sessionId();

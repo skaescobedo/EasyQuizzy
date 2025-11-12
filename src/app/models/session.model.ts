@@ -2,6 +2,7 @@
 export interface Participant {
   nickname: string;
   avatar_url?: string;
+  score: number;
 }
 
 // === Información general de la sesión ===
@@ -15,6 +16,7 @@ export interface SessionInfo {
 export interface AnswerSessionOut {
   answer_id: number;
   answer_text: string;
+  is_correct?: boolean;
 }
 
 export interface QuestionSessionOut {
@@ -23,6 +25,8 @@ export interface QuestionSessionOut {
   question_type: string;
   time_limit_sec?: number;
   image_url?: string;
+  correct_text?: string;
+  explanation?: string;
   answers: AnswerSessionOut[];
 }
 

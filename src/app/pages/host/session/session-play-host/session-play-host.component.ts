@@ -1,0 +1,134 @@
+import { Component, inject, signal, computed, effect } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { SessionService } from "../../../../services/session.service";
+import { Router } from "@angular/router";
+
+@Component({
+  standalone: true,
+  selector: "app-session-play-host",
+  imports: [CommonModule],
+  templateUrl: "./session-play-host.component.html",
+})
+export class SessionPlayHostComponent {
+  session = inject(SessionService);
+  router = inject(Router);
+  showScores = signal(false);
+  quizEnded = signal(false);
+  participants = this.session.participants;
+
+  timeLeft = signal<number>(0);
+  timerRunning = signal<boolean>(false);
+  startTime = 0;
+
+  currentQuestion = computed(() => {
+    const index = this.session.currentQuestionIndex();
+    return this.session.questions()[index];
+  });
+
+    rankedParticipants = computed(() =>
+    [...this.participants()].sort((a, b) => (b.score || 0) - (a.score || 0))
+  );
+
+  constructor() {
+    // 🔹 Reiniciar temporizador en cada pregunta
+    effect(() => {
+      const q = this.currentQuestion();
+      if (q && !this.quizEnded()) {
+        this.startTimer(q.time_limit_sec || 0);
+      }
+    });
+  }
+
+  // ==============================
+  // ⏱️ Temporizador
+  // ==============================
+  startTimer(seconds: number) {
+    clearInterval((this as any)._interval);
+    this.startTime = Date.now();
+
+    if (seconds > 0) {
+      this.timeLeft.set(seconds);
+      this.timerRunning.set(true);
+
+      (this as any)._interval = setInterval(() => {
+        const newTime = this.timeLeft() - 1;
+        this.timeLeft.set(newTime);
+
+        if (newTime <= 0) {
+          clearInterval((this as any)._interval);
+          this.timerRunning.set(false);
+          this.endQuestion();
+        }
+      }, 1000);
+    } else {
+      this.timeLeft.set(0);
+      this.timerRunning.set(false);
+    }
+  }
+
+  // ==============================
+  // 🏁 Terminar pregunta
+  // ==============================
+  async endQuestion() {
+    if (this.showScores()) return;
+    clearInterval((this as any)._interval);
+
+    this.showScores.set(true);
+    this.session.send("end_question");
+
+    const id = this.session.sessionId();
+    if (id) {
+      const scores = await this.session.fetchScores(id);
+      this.participants.set(scores);
+    }
+  }
+
+  // ==============================
+  // ⏭️ Pasar a la siguiente
+  // ==============================
+  nextQuestion() {
+    clearInterval((this as any)._interval);
+    const nextIndex = this.session.currentQuestionIndex() + 1;
+
+    if (nextIndex >= this.session.questions().length) {
+      // 🔹 Si ya no hay más preguntas → terminar el quiz
+      this.finishQuiz();
+      return;
+    }
+
+    this.session.send("next_question", { index: nextIndex });
+    this.session.currentQuestionIndex.set(nextIndex);
+    this.showScores.set(false);
+  }
+
+  // ==============================
+  // 🏁 Finalizar Quiz
+  // ==============================
+  async finishQuiz() {
+    clearInterval((this as any)._interval);
+    this.quizEnded.set(true);
+    this.showScores.set(false);
+    this.session.send("end_quiz");
+
+    const id = this.session.sessionId();
+    if (id) {
+      const scores = await this.session.fetchScores(id);
+      this.participants.set(scores);
+    }
+  }
+
+  // ==============================
+  // 📊 Ver resultados detallados
+  // ==============================
+  viewDetailedResults() {
+    alert("🔍 Aquí puedes abrir una vista con más estadísticas, ranking extendido, etc.");
+  }
+
+  // ==============================
+  // 🏠 Volver al inicio
+  // ==============================
+  goHome() {
+    this.session.disconnect();
+    this.router.navigate(['/']);
+  }
+}

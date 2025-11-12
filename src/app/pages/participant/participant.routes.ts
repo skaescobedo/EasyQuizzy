@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { SessionJoinComponent } from './session/session-join/session-join.component';
 import { SessionWaitComponent } from './session/session-wait/session-wait.component';
-import { QuizPlayComponent } from './session/session-play/session-play.component';
+import { SessionPlayComponent } from './session/session-play/session-play.component';
 
 export const participantRoutes: Routes = [
   // 1️⃣ Ruta principal: unirse sin código
@@ -19,7 +19,7 @@ export const participantRoutes: Routes = [
   // 3️⃣ Ruta para jugar (fase del quiz)
   {
     path: 'play',
-    component: QuizPlayComponent,
+    component: SessionPlayComponent,
   },
 
   // 4️⃣ Ruta con código (debe ir al final)

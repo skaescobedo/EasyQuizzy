@@ -20,7 +20,6 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     switchMap((access) => {
 
       if (access) {
-        console.log('🟢 Añadiendo token a', request.url);
         request = request.clone({
           setHeaders: { Authorization: `Bearer ${access}` }
         });

@@ -1,22 +1,20 @@
 import { Component, EventEmitter, Output, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, MatIconModule],
+  imports: [RouterLink, MatIconModule],
   template: `
     <div
       class="sidebar-container"
-      @fadeInOut
       (click)="close.emit()"
     >
       <!-- 🔹 Sidebar -->
       <aside
         class="sidebar"
-        @slideInOut
         (click)="$event.stopPropagation()"
       >
         <div class="sidebar-header">
@@ -29,31 +27,46 @@ import { AuthService } from '../../services/auth.service';
         <nav class="sidebar-nav">
           <ul>
             <li>
-              <a routerLink="/host" routerLinkActive="active">
+              <a
+                routerLink="/host"
+                [class.active]="isActive('/host', true)"
+              >
                 <mat-icon fontIcon="home"></mat-icon>
                 Inicio
               </a>
             </li>
             <li>
-              <a routerLink="/host/quizzes" routerLinkActive="active">
+              <a
+                routerLink="/host/quizzes"
+                [class.active]="isActive('/host/quizzes')"
+              >
                 <mat-icon fontIcon="list_alt"></mat-icon>
                 Mis Quizzes
               </a>
             </li>
             <li>
-              <a routerLink="/host/create" routerLinkActive="active">
+              <a
+                routerLink="/host/create"
+                [class.active]="isActive('/host/create')"
+              >
                 <mat-icon fontIcon="add_circle"></mat-icon>
                 Crear Quiz
               </a>
             </li>
             <li>
-              <a routerLink="/host/analytics" routerLinkActive="active">
+              <a
+                routerLink="/host/analytics"
+                [class.active]="isActive('/host/analytics')"
+              >
                 <mat-icon fontIcon="bar_chart"></mat-icon>
                 Analíticas
               </a>
             </li>
             <li>
-              <a routerLink="/host/profile" routerLinkActive="active">
+              <a
+                routerLink="/host/profile"
+                [class.active]="isActive('/host/profile')"
+              >
                 <mat-icon fontIcon="person"></mat-icon>
                 Mi perfil
               </a>
@@ -76,9 +89,20 @@ import { AuthService } from '../../services/auth.service';
 export class SidebarComponent {
   @Output() close = new EventEmitter<void>();
   private auth = inject(AuthService);
+  private router = inject(Router);
 
   logout() {
     this.auth.logout();
     this.close.emit();
+  }
+
+  /** ✅ Verifica si una ruta está activa (exacta o parcial) */
+  isActive(url: string, exact = false): boolean {
+    return this.router.isActive(url, {
+      paths: exact ? 'exact' : 'subset',
+      queryParams: 'ignored',
+      fragment: 'ignored',
+      matrixParams: 'ignored',
+    });
   }
 }
