@@ -50,5 +50,13 @@
       <mat-icon fontIcon="rocket_launch" class="text-white text-base"></mat-icon>
       Iniciar sesión en vivo
     </button>
+
+    <button
+      class="bg-blue-500 text-white rounded-xl py-2 w-full font-medium 
+            hover:bg-blue-600 transition flex items-center justify-center gap-2"
+      (click)="createSelfStudy.emit(quiz.quiz_id)">
+      <mat-icon fontIcon="menu_book"></mat-icon>
+      Autoestudio
+    </button>
   </div>
 </div>

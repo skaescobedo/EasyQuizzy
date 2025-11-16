@@ -14,4 +14,5 @@ import { QuizListItem } from '../../../../services/quiz.service';
 export class QuizCard {
   @Input({ required: true }) quiz!: QuizListItem;
   @Output() createSession = new EventEmitter<number>();
+  @Output() createSelfStudy = new EventEmitter<number>();
 }

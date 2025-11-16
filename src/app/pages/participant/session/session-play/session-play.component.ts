@@ -20,6 +20,9 @@ export class SessionPlayComponent {
   shortAnswer = "";
   startTime = 0;
   router = inject(Router);
+  isSelfStudy = signal(false);
+  showNextButton = signal(false);    // Mostrar botón "Siguiente pregunta"
+  allowFinishQuestion = signal(false); // Mostrar "Terminar pregunta"
 
   quizEnded = signal(false);
   participants = this.session.participants;
@@ -67,6 +70,12 @@ export class SessionPlayComponent {
         this.startTimer(q.time_limit_sec || 0);
       }
     });
+
+    // Detectar si es autoestudio desde sessionService
+    effect(() => {
+      const mode = this.session.mode?.(); 
+      if (mode === "self") this.isSelfStudy.set(true);
+    });
   }
 
   resetQuestion() {
@@ -80,15 +89,29 @@ export class SessionPlayComponent {
   startTimer(seconds: number) {
     clearInterval((this as any)._interval);
     this.startTime = Date.now();
+
     if (seconds <= 0) return;
 
     this.timeLeft.set(seconds);
+
     (this as any)._interval = setInterval(() => {
       const newTime = this.timeLeft() - 1;
       this.timeLeft.set(newTime);
-      if (newTime <= 0) clearInterval((this as any)._interval);
+
+      if (newTime <= 0) {
+        clearInterval((this as any)._interval);
+
+        // 🔥 SI ES AUTOESTUDIO → AUTO-FINALIZAR PREGUNTA
+        if (this.isSelfStudy()) {
+          this.autoSubmitIfNeeded();     // enviar respuesta (aunque sea null)
+          this.showFeedback.set(true);   // mostrar corrección
+          this.showNextButton.set(true); // permitir avanzar
+          this.allowFinishQuestion.set(false);
+        }
+      }
     }, 1000);
   }
+
 
   selectAnswer(id: number) {
     if (this.showFeedback()) return;
@@ -98,6 +121,10 @@ export class SessionPlayComponent {
   submit() {
     if (this.isSubmitted()) return;
     this.autoSubmitIfNeeded();
+    
+    if (this.isSelfStudy()) {
+      this.allowFinishQuestion.set(true);
+    }
   }
 
   autoSubmitIfNeeded() {
@@ -146,5 +173,86 @@ export class SessionPlayComponent {
   goHome() {
     this.session.disconnect();
     window.location.href = "/"; // o router.navigate(['/inicio'])
+  }
+
+  async finishSelfStudy() {
+    console.log("🔚 Finalizando autoestudio...");
+
+    clearInterval((this as any)._interval);
+
+    this.quizEnded.set(true);
+
+    const id = this.session.sessionId();
+    if (id) {
+      const scores = await this.session.fetchScores(id);
+      this.participants.set(scores);
+
+      const playerName = this.session.nickname();
+      const me = scores.find((p) => p.nickname === playerName);
+      this.totalScore.set(me?.score || 0);
+    }
+
+    this.session.disconnect();
+  }
+
+  finishQuestionSelfStudy() {
+    if (!this.isSelfStudy()) return;
+
+    // ⛔ Detener el temporizador
+    clearInterval((this as any)._interval);
+    this.timeLeft.set(0);
+
+    this.autoSubmitIfNeeded();  // asegúrate que mande respuesta si no lo hizo
+
+    this.showFeedback.set(true);
+    this.allowFinishQuestion.set(false);
+
+    // Mostrar botón para pasar a la siguiente
+    this.showNextButton.set(true);
+  }
+
+
+  nextQuestion() {
+    if (!this.isSelfStudy()) return;
+
+    const next = this.session.currentQuestionIndex() + 1;
+    const total = this.session.questions().length;
+
+    if (next >= total) {
+      // Finaliza quiz
+      this.finishSelfStudy();
+      return;
+    }
+
+    this.session.currentQuestionIndex.set(next);
+    this.showFeedback.set(false);
+    this.allowFinishQuestion.set(false);
+    this.showNextButton.set(false);
+    this.resetQuestion();
+  }
+
+  retrySelfStudy() {
+    const quizId = this.session.quizId?.(); // lo guardaremos abajo
+    if (!quizId) return;
+
+    // Limpia estado actual
+    this.session.disconnect();
+    this.session.clearLocalSession();
+
+    // Crear nueva sesión self-study
+    this.session.createSelfStudySession(quizId).then(() => {
+      // Reiniciar valores internos
+      this.quizEnded.set(false);
+      this.showFeedback.set(false);
+      this.isSubmitted.set(false);
+      this.showNextButton.set(false);
+      this.allowFinishQuestion.set(false);
+
+      this.session.currentQuestionIndex.set(0);
+    });
+  }
+
+  viewDetailedResults() {
+    alert("🔍 Aquí puedes abrir una vista con más estadísticas, ranking extendido, etc.");
   }
 }

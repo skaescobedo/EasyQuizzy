@@ -23,7 +23,8 @@
     @for (q of items(); track trackById($index, q)) {
       <app-quiz-card
         [quiz]="q"
-        (createSession)="createLiveSession($event)">
+        (createSession)="createLiveSession($event)"
+        (createSelfStudy)="createSelfStudy($event)">
       </app-quiz-card>
     }
   </div>

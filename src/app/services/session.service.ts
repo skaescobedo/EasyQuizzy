@@ -10,12 +10,14 @@ export class SessionService {
 
   // === Signals reactivas ===
   sessionId = signal<number | null>(null);
+  quizId = signal<number | null>(null);
   code = signal<string>('');
   quizTitle = signal<string>('');
   participants = signal<Participant[]>([]);
   questions = signal<QuestionSessionOut[]>([]);
   currentQuestionIndex = signal<number>(0);
   isConnected = signal(false);
+  mode = signal<string | null>(null);
   role = signal<'host' | 'player' | null>(null);
   accessCode = signal<string | null>(null);
   nickname = signal<string | null>(null);
@@ -35,8 +37,42 @@ export class SessionService {
     this.sessionId.set(session.session_id);
     this.code.set(session.code);
     this.quizTitle.set(session.name);
+    this.participants.set([]);
 
     this.connectAsHost(session.session_id);
+    return session;
+  }
+
+  async createSelfStudySession(quizId: number) {
+    const session: any = await this.http
+      .post(`${this.apiUrl}?quiz_id=${quizId}&mode=self`, {})
+      .toPromise();
+
+    console.log(session);
+    const s = session.session;
+    const p = session.participant;
+
+    this.sessionId.set(s.session_id);
+    this.quizTitle.set(s.name);
+
+    // 🔥 conectar como jugador
+    this.connectAsPlayer(
+      s.session_id,
+      p.nickname,
+      "",
+      p.access_code
+    );
+
+    this.nickname.set(p.nickname);
+    this.accessCode.set(p.access_code);
+
+    // 🔥 guardar localmente para submit_answer()
+    localStorage.setItem("access_code", p.access_code);
+    localStorage.setItem("participant_id", p.participant_id.toString());
+
+    await this.fetchQuiz(s.session_id);
+    this.currentQuestionIndex.set(0);
+
     return session;
   }
 
@@ -258,6 +294,8 @@ export class SessionService {
 
     this.quizTitle.set(quiz!.title);
     this.questions.set(quiz!.questions);
+    this.mode.set(quiz!.mode);
+    this.quizId.set(quiz!.quiz_id);
     console.log(quiz);
     return quiz!;
   }
