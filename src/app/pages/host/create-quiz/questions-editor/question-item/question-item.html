@@ -1,5 +1,5 @@
 <div [formGroup]="group" class="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl p-4 mb-6">
-  <!-- Header con toggle -->
+  <!-- Header con toggle + eliminar -->
   <div class="flex justify-between items-center mb-2">
     <div class="flex items-center gap-2">
       <button
@@ -24,6 +24,7 @@
       }
     </div>
 
+    <!-- 🔴 Botón eliminar (estilo del snippet) -->
     <button
       type="button"
       (click)="remove.emit()"
@@ -94,12 +95,14 @@
       />
     }
 
-    <!-- Respuestas (MC y TF) -->
+    <!-- Respuestas (MC y TF)
+         📌 Importante: en TF ahora SÍ mostramos el toggle de “correcta”
+         para que puedas elegir si la correcta es “Verdadero” o “Falso”. -->
     @if (type !== 'short_answer') {
       <app-answers-editor class="mt-2"
         [formArray]="answersArray"
         [lockAddRemove]="type === 'true_false'"
-        [hideCorrectToggle]="type === 'true_false'"
+        [hideCorrectToggle]="false"
         [readonlyText]="type === 'true_false'">
       </app-answers-editor>
     }

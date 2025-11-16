@@ -12,7 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class CategoriesEditor {
   @Input({ required: true }) formArray!: FormArray;
-  @Output() removedCategory = new EventEmitter<string>(); // 👈 notifica el nombre eliminado
+  @Output() categoryRemoved = new EventEmitter<string>();
 
   private fb = inject(FormBuilder);
 
@@ -29,13 +29,16 @@ export class CategoriesEditor {
   }
 
   removeCategory(i: number) {
-    // Obtener el nombre ANTES de eliminar
-    const name = (this.groupAt(i).get('name')?.value as string | null)?.trim() || '';
-    if (name) this.removedCategory.emit(name);
-
+    const removedName = (this.groupAt(i).get('name')?.value as string) || '';
     this.formArray.removeAt(i);
-    // Re-index
+
+    // Reasignar order_index
     this.formArray.controls.forEach((ctrl, idx) => ctrl.get('order_index')?.setValue(idx + 1));
+
+    // Avisar al padre para limpiar preguntas con esa categoría
+    if (removedName.trim()) {
+      this.categoryRemoved.emit(removedName);
+    }
   }
 
   groupAt(i: number): FormGroup {

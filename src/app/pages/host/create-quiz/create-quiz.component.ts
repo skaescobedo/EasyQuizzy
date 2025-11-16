@@ -97,21 +97,21 @@ export class CreateQuizComponent {
       );
     });
 
-    // Vuelve a Manual para editar/guardar
+    // Tras generar, volvemos a modo Manual para editar/guardar
     this.useAI.set(false);
     this.success.set(true);
   }
 
-  /** Si se elimina una categoría, poner esas preguntas en "Sin categoría" */
-  onCategoryRemoved(name: string) {
-    if (!name) return;
-    for (let i = 0; i < this.questions.length; i++) {
-      const g = this.questions.at(i) as FormGroup;
-      const current = (g.get('category_name')?.value as string) || '';
-      if (current === name) {
-        g.get('category_name')?.setValue('');
+  /** Cuando se elimina una categoría, poner esas preguntas como "sin categoría" */
+  onCategoryRemoved(removedName: string) {
+    if (!removedName?.trim()) return;
+    const target = removedName.trim().toLowerCase();
+    this.questions.controls.forEach((ctrl: any) => {
+      const current = (ctrl.get('category_name')?.value || '').trim().toLowerCase();
+      if (current === target) {
+        ctrl.get('category_name')?.setValue('');
       }
-    }
+    });
   }
 
   // === Submit ===

@@ -46,7 +46,7 @@
       <!-- 🟩 Categorías -->
       <app-categories-editor
         [formArray]="categories"
-        (removedCategory)="onCategoryRemoved($event)">
+        (categoryRemoved)="onCategoryRemoved($event)">
       </app-categories-editor>
 
       <!-- 🟧 Preguntas -->

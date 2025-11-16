@@ -12,6 +12,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormArray, FormBuilder, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { Subscription } from 'rxjs';
 
 import { AnswersEditor } from './answers-editor/answers-editor';
 import { ImageUploader } from './image-uploader/image-uploader';
@@ -40,6 +41,9 @@ export class QuestionItem implements OnInit, OnDestroy {
   collapsed = signal<boolean>(false);
   iaLoading = signal<boolean>(false);
 
+  /** Subs para TF (mutua exclusión) */
+  private tfSubs: Subscription[] = [];
+
   /** preview local; si viene de archivo será blob:, si ya existiera un URL será http(s): */
   previewUrl = signal<string | null>(null);
   previewName = signal<string | null>(null);
@@ -47,15 +51,13 @@ export class QuestionItem implements OnInit, OnDestroy {
   ngOnInit(): void {
     if (this.startCollapsed) this.collapsed.set(true);
 
-    // Suscripción: cuando el usuario CAMBIA el tipo, normalizamos
+    // Reaccionar a cambios de tipo, preservando respuestas de IA cuando existan
     this.group.get('question_type')?.valueChanges.subscribe((nextType: string) => {
-      this.onTypeChange(nextType, /*fromInit*/ false);
+      this.onTypeChange(nextType);
     });
+    this.onTypeChange(this.type);
 
-    // Inicialización: NO destruir respuestas generadas por IA
-    this.onTypeChange(this.type, /*fromInit*/ true);
-
-    // Preview si ya viene url (modo edición / IA con imágenes)
+    // Si ya hay un image_url (modo edición), mostrarlo:
     const existingUrl = this.group.get('image_url')?.value as string | null;
     if (existingUrl) {
       this.previewUrl.set(existingUrl);
@@ -65,6 +67,7 @@ export class QuestionItem implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.revokePreview();
+    this.clearTfSubs();
   }
 
   get answersArray(): FormArray {
@@ -98,26 +101,65 @@ export class QuestionItem implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Normaliza el bloque de respuestas según el tipo seleccionado.
-   * - fromInit=true => NO destruir respuestas existentes para multiple_choice (respeta IA).
-   * - En cambios de usuario (fromInit=false) sí se reconfigura.
-   */
-  onTypeChange(nextType: string, fromInit = false) {
+  private clearTfSubs() {
+    this.tfSubs.forEach(s => s.unsubscribe());
+    this.tfSubs = [];
+  }
+
+  /** Configura la mutua exclusión de is_correct para TF */
+  private setupTrueFalseMutualExclusion() {
+    this.clearTfSubs();
+    if (this.type !== 'true_false') return;
+
+    const a0 = this.answersArray.at(0)?.get('is_correct');
+    const a1 = this.answersArray.at(1)?.get('is_correct');
+    if (!a0 || !a1) return;
+
+    this.tfSubs.push(
+      a0.valueChanges.subscribe((v: boolean) => {
+        if (v) a1.setValue(false, { emitEvent: false });
+      })
+    );
+    this.tfSubs.push(
+      a1.valueChanges.subscribe((v: boolean) => {
+        if (v) a0.setValue(false, { emitEvent: false });
+      })
+    );
+  }
+
+  onTypeChange(nextType: string) {
     if (!nextType) return;
     const answers = this.answersArray;
 
+    // --- TRUE / FALSE ---
     if (nextType === 'true_false') {
-      // Siempre forzar TF: exactamente 2 respuestas (V/F)
+      // Detectar si ya venían de IA y preservar cuál es correcta
+      const current = (answers.value ?? []) as Array<{ answer_text?: string; is_correct?: boolean }>;
+      let correctTrue = true; // default
+
+      const hasExistingTF =
+        current?.length >= 2 &&
+        /verdadero/i.test(String(current[0]?.answer_text || '')) &&
+        /falso/i.test(String(current[1]?.answer_text || ''));
+
+      if (hasExistingTF) {
+        correctTrue = !!current[0]?.is_correct; // si Verdadero venía correcto, se respeta
+      }
+
       answers.clear();
-      answers.push(this.fb.group({ answer_text: ['Verdadero', Validators.required], is_correct: [true] }));
-      answers.push(this.fb.group({ answer_text: ['Falso', Validators.required], is_correct: [false] }));
+      answers.push(this.fb.group({ answer_text: ['Verdadero', Validators.required], is_correct: [correctTrue] }));
+      answers.push(this.fb.group({ answer_text: ['Falso', Validators.required], is_correct: [!correctTrue] }));
       this.group.get('correct_text')?.setValue(null);
+
+      this.setupTrueFalseMutualExclusion();
       return;
     }
 
+    // Al salir de TF, limpiar subs
+    this.clearTfSubs();
+
+    // --- SHORT ANSWER ---
     if (nextType === 'short_answer') {
-      // Siempre forzar SA: sin answers, con correct_text
       answers.clear();
       if (this.group.get('correct_text')?.value == null) {
         this.group.get('correct_text')?.setValue('');
@@ -125,30 +167,18 @@ export class QuestionItem implements OnInit, OnDestroy {
       return;
     }
 
-    // multiple_choice
-    if (fromInit) {
-      // En init NO tocar si ya hay respuestas (para respetar las de IA)
-      if (answers.length > 0) {
-        // Asegurar que tienen required y boolean
-        for (let i = 0; i < answers.length; i++) {
-          const g = answers.at(i) as FormGroup;
-          if (!g.get('answer_text')?.validator) {
-            g.get('answer_text')?.addValidators([Validators.required]);
-            g.get('answer_text')?.updateValueAndValidity({ emitEvent: false });
-          }
-          if (g.get('is_correct')?.value == null) {
-            g.get('is_correct')?.setValue(false, { emitEvent: false });
-          }
-        }
-        this.group.get('correct_text')?.setValue(null);
-        return;
-      }
+    // --- MULTIPLE CHOICE ---
+    // Preservar las respuestas si ya vienen de IA y tienen texto.
+    const controls = answers.controls ?? [];
+    const hasAnyAnswer = controls.length > 0;
+    const hasAnyText = controls.some(c => (c.get('answer_text')?.value || '').toString().trim().length > 0);
+
+    if (!hasAnyAnswer || !hasAnyText) {
+      answers.clear();
+      answers.push(this.fb.group({ answer_text: ['', Validators.required], is_correct: [false] }));
+      answers.push(this.fb.group({ answer_text: ['', Validators.required], is_correct: [false] }));
     }
 
-    // Cambio del usuario o init sin respuestas: crear placeholders mínimos
-    answers.clear();
-    answers.push(this.fb.group({ answer_text: ['', Validators.required], is_correct: [false] }));
-    answers.push(this.fb.group({ answer_text: ['', Validators.required], is_correct: [false] }));
     this.group.get('correct_text')?.setValue(null);
   }
 
