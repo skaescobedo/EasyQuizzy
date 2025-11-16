@@ -90,17 +90,22 @@
         <div class="flex flex-col items-center gap-4">
           @if (!showFeedback()) {
             <button
-              (click)="submit()"
+              (click)="isSubmitted() ? finishQuestionSelfStudy() : submit()"
               [disabled]="
-                isSubmitted() ||
-                (q.question_type !== 'short_answer' && !selectedAnswer()) ||
-                (q.question_type === 'short_answer' && !shortAnswer)
+                (!isSubmitted() &&
+                  ((q.question_type !== 'short_answer' && !selectedAnswer()) ||
+                  (q.question_type === 'short_answer' && !shortAnswer)))
+                || (isSubmitted() && !isSelfStudy())
               "
-              class="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] 
-                     text-white px-8 py-3 rounded-xl font-semibold shadow-md transition cursor-pointer
-                     disabled:opacity-60 disabled:cursor-default"
+              class="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]
+                    text-white px-8 py-3 rounded-xl font-semibold shadow-md transition cursor-pointer
+                    disabled:opacity-60 disabled:cursor-default"
             >
-              Enviar respuesta
+              {{ 
+                !isSubmitted() 
+                  ? "Enviar respuesta" 
+                  : (isSelfStudy() ? "Terminar pregunta" : "Esperando…") 
+              }}
             </button>
           }
 
@@ -134,15 +139,38 @@
           </div>
         }
 
+        @if (isSelfStudy() && showFeedback() && showNextButton()) {
+          <div class="flex justify-center mt-8">
+            <button
+              (click)="nextQuestion()"
+              class="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]
+                      text-white px-8 py-3 rounded-xl font-semibold shadow-md transition cursor-pointer
+                      disabled:opacity-60 disabled:cursor-default"
+            >
+              Siguiente pregunta
+            </button>
+            @if (!quizEnded()) {
+                <button
+                  (click)="finishSelfStudy()"
+                  class="bg-red-500 hover:bg-red-600 text-white ml-3 px-6 py-3 rounded-xl font-bold shadow-md transition"
+                >
+                  Terminar Autoestudio
+                </button>
+            }
+          </div>
+        }
+
         <!-- Avatar -->
-        <div class="mt-10 flex justify-center items-center gap-4 text-[var(--color-muted)] text-sm">
-          <img
-            [src]="getAvatar()"
-            class="w-10 h-10 rounded-full border border-[var(--color-border)] shadow-sm"
-            alt="avatar"
-          />
-          <span>{{ session.nickname() || 'Tú' }}</span>
-        </div>
+        @if (!isSelfStudy()) {
+          <div class="mt-10 flex justify-center items-center gap-4 text-[var(--color-muted)] text-sm">
+            <img
+              [src]="getAvatar()"
+              class="w-10 h-10 rounded-full border border-[var(--color-border)] shadow-sm"
+              alt="avatar"
+            />
+            <span>{{ session.nickname() || 'Tú' }}</span>
+          </div>
+        }
       </div>
 
     } @else {
@@ -166,84 +194,124 @@
         </p>
 
         <!-- Tabla resumida -->
-<!-- Tabla resumida -->
-<ul
-  class="divide-y divide-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-xl shadow-inner mb-6"
->
-  @for (p of rankedParticipants(); track p.nickname; let i = $index) {
-    <li class="py-3 px-6 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <span class="font-bold w-6 text-[var(--color-text)] text-center">
-          {{ i + 1 }}.
-        </span>
+        <ul
+          class="divide-y divide-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-xl shadow-inner mb-6"
+        >
+          @for (p of rankedParticipants(); track p.nickname; let i = $index) {
+            <li class="py-3 px-6 flex justify-between items-center">
+              <div class="flex items-center gap-3">
+                <span class="font-bold w-6 text-[var(--color-text)] text-center">
+                  {{ i + 1 }}.
+                </span>
 
-        <!-- Trofeos solo para los 3 primeros -->
-        @if (i === 0) {
-          <span class="material-icons text-yellow-500">emoji_events</span>
-        } @else if (i === 1) {
-          <span class="material-icons text-gray-400">emoji_events</span>
-        } @else if (i === 2) {
-          <span class="material-icons text-amber-700">emoji_events</span>
-        }
+                <!-- Trofeos solo para los 3 primeros -->
+                @if (i === 0) {
+                  <span class="material-icons text-yellow-500">emoji_events</span>
+                } @else if (i === 1) {
+                  <span class="material-icons text-gray-400">emoji_events</span>
+                } @else if (i === 2) {
+                  <span class="material-icons text-amber-700">emoji_events</span>
+                }
 
-        <img
-          [src]="p.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
-          class="w-10 h-10 rounded-full border border-[var(--color-border)] shadow-sm"
-        />
-        <span class="font-semibold text-[var(--color-text)]">{{ p.nickname }}</span>
-      </div>
+                <img
+                  [src]="p.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
+                  class="w-10 h-10 rounded-full border border-[var(--color-border)] shadow-sm"
+                />
+                <span class="font-semibold text-[var(--color-text)]">{{ p.nickname }}</span>
+              </div>
 
-      <span class="font-bold text-[var(--color-primary)]">
-        {{ p.score || 0 }}
-      </span>
-    </li>
-  }
-</ul>
-
+              <span class="font-bold text-[var(--color-primary)]">
+                {{ p.score || 0 }}
+              </span>
+            </li>
+          }
+        </ul>
         <!-- Botones -->
         <div class="flex flex-col gap-3 mt-6">
-          <div class="flex flex-col sm:flex-row justify-center gap-3">
-            <button
-              (click)="reloadQuiz()"
-              class="bg-[var(--color-primary)] cursor-pointer hover:bg-[var(--color-primary-hover)] 
-                     text-white px-6 py-3 rounded-xl font-semibold shadow-md transition flex items-center justify-center gap-2"
-            >
-              <span class="material-icons">replay</span>
-              Unirme a otro quiz
-            </button>
 
-            <button
-              (click)="goHome()"
-              class="bg-[var(--color-success)] cursor-pointer hover:bg-green-600 
-                     text-white px-6 py-3 rounded-xl font-semibold shadow-md transition flex items-center justify-center gap-2"
-            >
-              <span class="material-icons">home</span>
-              Ir a EasyQuizzy
-            </button>
-          </div>
-
-          <!-- Input de nuevo código -->
-          @if (showJoinInput()) {
-            <div class="mt-4 flex flex-col sm:flex-row gap-3 justify-center items-center">
-              <input
-                [(ngModel)]="joinCode"
-                placeholder="Código del nuevo quiz"
-                maxlength="6"
-                class="border-2 border-[var(--color-border)] rounded-xl px-4 py-2 w-60 text-center text-[var(--color-text)]
-                       bg-[var(--color-bg-secondary)] focus:border-[var(--color-primary)] outline-none transition"
-              />
+          <!-- 🔥 MODO SELF-STUDY -->
+          @if (isSelfStudy()) {
+            
+            <!-- 🔝 Primera fila -->
+            <div class="flex flex-col sm:flex-row justify-center gap-3">
               <button
-                (click)="joinNewQuiz()"
-                class="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white px-4 py-2 rounded-xl font-semibold shadow-md transition"
+                (click)="retrySelfStudy()"
+                class="bg-[var(--color-primary)] cursor-pointer hover:bg-[var(--color-primary-hover)]
+                      text-white px-6 py-3 rounded-xl font-semibold shadow-md transition flex
+                      items-center justify-center gap-2"
               >
-                Unirme
+                <span class="material-icons">refresh</span>
+                Volver a intentarlo
+              </button>
+
+              <button
+                (click)="viewDetailedResults()"
+                class="bg-[var(--color-primary)] cursor-pointer hover:bg-[var(--color-primary-hover)] 
+                      text-white px-6 py-3 rounded-xl font-semibold shadow-md transition flex items-center justify-center gap-2"
+              >
+                <span class="material-icons">insights</span>
+                Ver resultados detallados
+              </button>
+            </div>
+
+            <!-- ⬇️ Segunda fila -->
+            <div class="flex justify-center">
+              <button
+                (click)="goHome()"
+                class="bg-[var(--color-success)] cursor-pointer hover:bg-green-600 
+                      text-white px-6 py-3 rounded-xl font-semibold shadow-md transition flex items-center justify-center gap-2"
+              >
+                <span class="material-icons">home</span>
+                Ir a EasyQuizzy
+              </button>
+            </div>
+
+          } @else {
+
+            <!-- 🚀 MODO NORMAL: ambos botones en una sola fila -->
+            <div class="flex flex-col sm:flex-row justify-center gap-3">
+              <button
+                (click)="reloadQuiz()"
+                class="bg-[var(--color-primary)] cursor-pointer hover:bg-[var(--color-primary-hover)] 
+                      text-white px-6 py-3 rounded-xl font-semibold shadow-md transition flex items-center justify-center gap-2"
+              >
+                <span class="material-icons">replay</span>
+                Unirme a otro quiz
+              </button>
+
+              <button
+                (click)="goHome()"
+                class="bg-[var(--color-success)] cursor-pointer hover:bg-green-600 
+                      text-white px-6 py-3 rounded-xl font-semibold shadow-md transition flex items-center justify-center gap-2"
+              >
+                <span class="material-icons">home</span>
+                Ir a EasyQuizzy
               </button>
             </div>
           }
-        </div>
-      </div>
-    }
-  } @else {
+        </div> <!-- ✅ este sí es el cierre correcto -->
+
+        <!-- Input de nuevo código -->
+        @if (showJoinInput()) {
+          <div class="mt-4 flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <input
+              [(ngModel)]="joinCode"
+              placeholder="Código del nuevo quiz"
+              maxlength="6"
+              class="border-2 border-[var(--color-border)] rounded-xl px-4 py-2 w-60 text-center text-[var(--color-text)]
+                    bg-[var(--color-bg-secondary)] focus:border-[var(--color-primary)] outline-none transition placeholder-gray-400"
+            />
+            <button
+              (click)="joinNewQuiz()"
+              class="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white px-4 py-2 rounded-xl font-semibold shadow-md transition"
+            >
+              Unirme
+            </button>
+          </div>
+        }
+      </div> <!-- 🟢 Cierra DIV de resultados -->
+    } <!-- 🟢 Cierra @else de quizEnded -->
+  } @else { <!-- 🟢 Cierra @if(currentQuestion()) Y abre el @else -->
     <div class="text-center mt-20 text-[var(--color-text)] animate-pulse">
       Esperando inicio del quiz...
     </div>

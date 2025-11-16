@@ -32,6 +32,7 @@ export interface QuestionSessionOut {
 
 export interface QuizSessionOut {
   quiz_id: number;
+  mode: string;
   title: string;
   description?: string;
   categories: string[];

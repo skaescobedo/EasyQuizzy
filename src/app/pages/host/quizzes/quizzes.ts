@@ -67,4 +67,18 @@ export class HostQuizzes {
       this.loading.set(false);
     }
   }
+
+  async createSelfStudy(quizId: number) {
+    try {
+      this.loading.set(true);
+      const selfSession = await this.sessionService.createSelfStudySession(quizId);
+
+      this.router.navigate(['quizz/play']);
+    } catch (err: any) {
+      this.error.set(err.message || 'Error creando autoestudio.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
 }
