@@ -1,6 +1,12 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormArray, Validators, FormGroup } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  FormArray,
+  Validators,
+  FormGroup,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -19,6 +25,7 @@ export class CreateQuizComponent {
   private fb = inject(FormBuilder);
   private quizService = inject(QuizService);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   loading = signal(false);
   success = signal(false);
@@ -30,6 +37,7 @@ export class CreateQuizComponent {
   quizForm = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(120)]],
     description: [''],
+    // Angular tipa esto como FormArray<FormControl<unknown>>, por eso luego casteamos a any
     categories: this.fb.array([]),
     questions: this.fb.array([]),
   });
@@ -49,31 +57,31 @@ export class CreateQuizComponent {
 
   /** Hidratar form con un preview de IA */
   loadPreviewFromAI(payload: QuizPayload) {
-    // Limpia
-    this.quizForm.reset();
-    this.categories.clear();
-    this.questions.clear();
+    // 1) Título/Descripción
+    this.quizForm.patchValue(
+      {
+        title: payload.title || '',
+        description: payload.description || '',
+      },
+      { emitEvent: false }
+    );
 
-    // Título/Descripción
-    this.quizForm.patchValue({
-      title: payload.title || '',
-      description: payload.description || '',
-    });
-
-    // Categorías
-    (payload.categories || []).forEach((c: any) => {
-      this.categories.push(
+    // 2) NUEVOS FormArray (para cambiar referencia y que OnPush reactive el hijo)
+    const catsFA = new FormArray<FormGroup<any>>([]);
+    (payload.categories || []).forEach((c: any, idx: number) => {
+      catsFA.push(
         this.fb.group({
           name: [c.name || 'General', Validators.required],
           weight: [Number(c.weight ?? 1), [Validators.required]],
+          order_index: [idx + 1],
           is_active: [true],
         })
       );
     });
 
-    // Preguntas
-    (payload.questions || []).forEach((q) => {
-      this.questions.push(
+    const qsFA = new FormArray<FormGroup<any>>([]);
+    (payload.questions || []).forEach((q: any) => {
+      qsFA.push(
         this.fb.group({
           question_text: [q.question_text || '', Validators.required],
           question_type: [q.question_type || 'multiple_choice', Validators.required],
@@ -83,7 +91,7 @@ export class CreateQuizComponent {
           time_limit_sec: [q.time_limit_sec ?? null],
           category_name: [q.category_name ?? ''],
           answers: this.fb.array(
-            (q.answers || []).map(a =>
+            (q.answers || []).map((a: any) =>
               this.fb.group({
                 answer_text: [a.answer_text || '', Validators.required],
                 is_correct: [!!a.is_correct],
@@ -97,21 +105,56 @@ export class CreateQuizComponent {
       );
     });
 
-    // Tras generar, volvemos a modo Manual para editar/guardar
+    // 3) Reemplazar controles — casteamos a any para no pelear con los generics de Angular
+    this.quizForm.setControl('categories', catsFA as any);
+    this.quizForm.setControl('questions', qsFA as any);
+
+    // 4) Forzar CD
+    this.cdr.markForCheck();
+
+    // Volver a modo Manual para editar/guardar
     this.useAI.set(false);
     this.success.set(true);
   }
 
-  /** Cuando se elimina una categoría, poner esas preguntas como "sin categoría" */
-  onCategoryRemoved(removedName: string) {
-    if (!removedName?.trim()) return;
-    const target = removedName.trim().toLowerCase();
-    this.questions.controls.forEach((ctrl: any) => {
-      const current = (ctrl.get('category_name')?.value || '').trim().toLowerCase();
-      if (current === target) {
-        ctrl.get('category_name')?.setValue('');
+  /**
+   * Handler opcional desde <app-categories-editor (categoryRemoved)="onCategoryRemoved($event)">
+   * Acepta string (nombre) u objeto { name?: string; index: number }.
+   */
+  onCategoryRemoved(evt: unknown) {
+    let removedName: string | undefined;
+
+    if (typeof evt === 'string') {
+      removedName = evt;
+    } else if (evt && typeof evt === 'object' && 'name' in (evt as any)) {
+      removedName = (evt as any).name ?? undefined;
+    }
+
+    // Re-numerar order_index de categorías
+    const catsFA = this.categories;
+    for (let i = 0; i < catsFA.length; i++) {
+      (catsFA.at(i) as FormGroup).get('order_index')?.setValue(i + 1, { emitEvent: false });
+    }
+
+    // Limpiar preguntas cuya category_name ya no exista
+    this.cleanupDanglingCategoryRefs();
+
+    this.cdr.markForCheck();
+    void removedName;
+  }
+
+  /** Deja en vacío las category_name que no existan en categories */
+  private cleanupDanglingCategoryRefs() {
+    const validNames = new Set(this.categoryNames);
+    const qsFA = this.questions;
+
+    for (let i = 0; i < qsFA.length; i++) {
+      const qg = qsFA.at(i) as FormGroup;
+      const current = (qg.get('category_name')?.value as string) || '';
+      if (current && !validNames.has(current)) {
+        qg.get('category_name')?.setValue('', { emitEvent: false });
       }
-    });
+    }
   }
 
   // === Submit ===
@@ -162,8 +205,8 @@ export class CreateQuizComponent {
 
       // Limpieza
       this.quizForm.reset();
-      this.questions.clear();
-      this.categories.clear();
+      this.quizForm.setControl('questions', new FormArray([]) as any);
+      this.quizForm.setControl('categories', new FormArray([]) as any);
 
       // Ir al viewer
       const id = created?.quiz_id ?? created?.id ?? created?.data?.quiz_id;
