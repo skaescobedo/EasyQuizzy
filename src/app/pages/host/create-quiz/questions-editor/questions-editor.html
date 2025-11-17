@@ -7,7 +7,7 @@
         (click)="generateExplanationsAll()"
         [disabled]="genAllLoading() || formArray.length === 0"
         class="border border-[var(--color-border)] px-3 py-2 rounded-lg hover:bg-[var(--color-bg-secondary)] transition text-sm"
-        title="Generar explicación IA para todas">
+      >
         {{ genAllLoading() ? 'Generando…' : 'IA: Explicar todas' }}
       </button>
 
@@ -21,15 +21,31 @@
     </div>
   </div>
 
-  <div>
+  <!-- 🔥 LISTA CON DRAG & DROP -->
+  <div cdkDropList (cdkDropListDropped)="drop($event)">
     @for (q of formArray.controls; track trackByIndex($index); let qIndex = $index) {
-      <app-question-item
-        [group]="getGroup(qIndex)"
-        [index]="qIndex"
-        [categoryNames]="categoryNames"
-        (remove)="removeQuestion(qIndex)"
-        (imageSelected)="onImageSelected(qIndex, $event)">
-      </app-question-item>
+      <div cdkDrag class="relative mb-6 group">
+        
+        <!-- 🎯 Handle visual de arrastre -->
+        <div 
+          cdkDragHandle
+          class="absolute -left-10 top-4 w-8 h-8 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] 
+                 flex items-center justify-center cursor-grab active:cursor-grabbing
+                 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:shadow-md"
+          title="Arrastra para reordenar"
+        >
+          <mat-icon fontIcon="drag_indicator" class="text-[var(--color-muted)] text-base"></mat-icon>
+        </div>
+
+        <!-- Componente de pregunta existente -->
+        <app-question-item
+          [group]="getGroup(qIndex)"
+          [index]="qIndex"
+          [categoryNames]="categoryNames"
+          (remove)="removeQuestion(qIndex)"
+          (imageSelected)="onImageSelected(qIndex, $event)"
+        ></app-question-item>
+      </div>
     }
   </div>
 </div>

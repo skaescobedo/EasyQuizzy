@@ -1,0 +1,92 @@
+<section class="max-w-5xl mx-auto bg-[var(--color-bg)] text-[var(--color-text)] p-6 rounded-2xl shadow-lg mt-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h1 class="text-2xl font-semibold mb-2">Editar Quiz</h1>
+      <p class="text-[var(--color-muted)]">Modifica los datos, categorías y preguntas de tu quiz.</p>
+    </div>
+    <a routerLink="/host/quizzes/{{ quizId() }}" class="text-[var(--color-primary)] hover:underline inline-flex items-center gap-1">
+      <mat-icon fontIcon="arrow_back"></mat-icon> Cancelar
+    </a>
+  </div>
+
+  <!-- Loading inicial -->
+  @if (loadingQuiz()) {
+    <div class="flex items-center justify-center py-20">
+      <div class="text-center">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-[var(--color-primary)] border-r-transparent"></div>
+        <p class="mt-4 text-[var(--color-muted)]">Cargando quiz...</p>
+      </div>
+    </div>
+  }
+
+  <!-- Error al cargar -->
+  @if (error() && !loadingQuiz()) {
+    <div class="p-4 border border-[var(--color-border)] rounded-xl text-[var(--color-danger)] bg-[var(--color-bg-secondary)]">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Formulario de edición -->
+  @if (!loadingQuiz() && !error()) {
+    <form [formGroup]="quizForm" (ngSubmit)="submitQuiz()">
+      <!-- Información general -->
+      <div class="mb-8">
+        <h2 class="text-lg font-medium mb-3 border-b border-[var(--color-border)] pb-1">Información general</h2>
+
+        <label class="block mb-2 font-medium">Título del quiz</label>
+        <input
+          formControlName="title"
+          placeholder="Ej: Conocimientos de Python"
+          class="w-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-lg px-3 py-2 text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+        />
+
+        <label class="block mt-4 mb-2 font-medium">Descripción (opcional)</label>
+        <textarea
+          formControlName="description"
+          rows="3"
+          placeholder="Describe brevemente el propósito del quiz"
+          class="w-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-lg px-3 py-2 text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+        ></textarea>
+      </div>
+
+      <!-- Categorías -->
+      <app-categories-editor
+        [formArray]="categories"
+        (categoryRemoved)="onCategoryRemoved($event)">
+      </app-categories-editor>
+
+      <!-- Preguntas -->
+      <app-questions-editor
+        class="block mt-8"
+        [formArray]="questions"
+        [categoryNames]="categoryNames">
+      </app-questions-editor>
+
+      <!-- Botones -->
+      <div class="flex justify-between items-center pt-4 border-t border-[var(--color-border)] mt-8">
+        <a
+          [routerLink]="['/host/quizzes', quizId()]"
+          class="text-[var(--color-primary)] hover:underline font-medium"
+        >
+          Cancelar
+        </a>
+
+        <button
+          type="submit"
+          [disabled]="loading()"
+          class="bg-[var(--color-primary)] text-white px-6 py-2 rounded-lg hover:opacity-90 transition"
+        >
+          {{ loading() ? 'Guardando cambios...' : 'Guardar cambios' }}
+        </button>
+      </div>
+
+      @if (error() && !loadingQuiz()) {
+        <p class="text-[var(--color-danger)] mt-3">{{ error() }}</p>
+      }
+      @if (success()) {
+        <p class="text-green-600 mt-3">✅ Quiz actualizado correctamente</p>
+      }
+    </form>
+  }
+</section>

@@ -102,3 +102,33 @@ body {
         fill 0.3s ease,
         stroke 0.3s ease;
 }
+
+// ======================
+// 🎨 CDK Drag & Drop
+// ======================
+
+.cdk-drag-preview {
+  opacity: 0.85;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-radius: 0.75rem;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cdk-drop-list-dragging .cdk-drag {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+// Handle de arrastre (opcional, para mejor UX)
+[cdkDragHandle] {
+  touch-action: none;
+  user-select: none;
+}

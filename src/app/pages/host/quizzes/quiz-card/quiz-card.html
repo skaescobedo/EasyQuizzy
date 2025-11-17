@@ -42,7 +42,16 @@
       Ver quiz
     </a>
 
-    <!-- 🔥 NUEVO BOTÓN PARA CREAR SESIÓN -->
+    <!-- 🆕 BOTÓN EDITAR -->
+    <a
+      class="bg-orange-500 text-white rounded-xl py-2 w-full font-medium
+             hover:bg-orange-600 transition flex items-center justify-center gap-2"
+      [routerLink]="['/host/quizzes', quiz.quiz_id, 'edit']">
+      <mat-icon fontIcon="edit" class="text-white text-base"></mat-icon>
+      Editar quiz
+    </a>
+
+    <!-- BOTÓN PARA CREAR SESIÓN -->
     <button
       class="bg-[var(--color-primary)] text-white rounded-xl py-2 w-full font-medium
              hover:bg-[var(--color-primary-hover)] transition flex items-center justify-center gap-2"

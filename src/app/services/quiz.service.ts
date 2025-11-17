@@ -95,6 +95,17 @@ export class QuizService {
     return await lastValueFrom(this.http.get<QuizFull>(`${this.base}/${id}`));
   }
 
+  // 🆕 actualizar quiz
+  async updateQuiz(id: number, data: QuizPayload, images: { index: number; file: File }[]): Promise<any> {
+    const formData = new FormData();
+    formData.append('quiz_data', JSON.stringify(data));
+    for (const { index, file } of images) {
+      const ext = file.name.includes('.') ? file.name.split('.').pop()! : 'png';
+      formData.append('images', file, `${index}.${ext}`);
+    }
+    return await lastValueFrom(this.http.put(`${this.base}/${id}`, formData));
+  }
+
   // =============== IA endpoints ===============
 
   /** Genera un preview de quiz con IA (no persiste) */

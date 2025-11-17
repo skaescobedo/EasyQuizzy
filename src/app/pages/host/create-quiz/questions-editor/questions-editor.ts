@@ -2,6 +2,7 @@ import { Component, Input, ChangeDetectionStrategy, inject, signal } from '@angu
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormArray, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { QuestionItem } from './question-item/question-item';
 import { QuizService, ExplainQuestionIn } from '../../../../services/quiz.service';
 
@@ -9,7 +10,7 @@ import { QuizService, ExplainQuestionIn } from '../../../../services/quiz.servic
   selector: 'app-questions-editor',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule, QuestionItem],
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule, QuestionItem, DragDropModule],
   templateUrl: './questions-editor.html',
 })
 export class QuestionsEditor {
@@ -56,6 +57,28 @@ export class QuestionsEditor {
   }
 
   trackByIndex = (index: number) => index;
+
+  /** 🔥 Drag & Drop handler */
+  drop(event: CdkDragDrop<any[]>) {
+    // Mover el FormGroup en el FormArray
+    const item = this.formArray.at(event.previousIndex);
+    this.formArray.removeAt(event.previousIndex);
+    this.formArray.insert(event.currentIndex, item);
+    
+    // Si tienes order_index en el FormGroup, actualizarlo
+    this.updateOrderIndexes();
+  }
+
+  /** Actualizar order_index después de reordenar */
+  private updateOrderIndexes() {
+    for (let i = 0; i < this.formArray.length; i++) {
+      const group = this.getGroup(i);
+      // Solo si tu FormGroup tiene order_index
+      if (group.contains('order_index')) {
+        group.patchValue({ order_index: i + 1 }, { emitEvent: false });
+      }
+    }
+  }
 
   /** IA: generar explicaciones para todas las preguntas */
   async generateExplanationsAll() {
