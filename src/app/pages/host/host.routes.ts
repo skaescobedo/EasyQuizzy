@@ -13,10 +13,30 @@ export const hostRoutes: Routes = [
       { path: '', component: HostHomeComponent },
       { path: 'create', component: CreateQuizComponent },
       { path: 'quizzes', loadComponent: () => import('./quizzes/quizzes').then(m => m.HostQuizzes) },
+      
       // 🆕 Ruta de edición
-      { path: 'quizzes/:id/edit', loadComponent: () => import('./edit-quiz/edit-quiz').then(m => m.EditQuizComponent) },
+      { 
+        path: 'quizzes/:id/edit', 
+        loadComponent: () => import('./edit-quiz/edit-quiz').then(m => m.EditQuizComponent) 
+      },
+      
       // Viewer
-      { path: 'quizzes/:id', loadComponent: () => import('./quizzes/quiz-viewer/quiz-viewer').then(m => m.QuizViewer) },
+      { 
+        path: 'quizzes/:id', 
+        loadComponent: () => import('./quizzes/quiz-viewer/quiz-viewer').then(m => m.QuizViewer) 
+      },
+
+      // 🆕 Historial de sesiones
+      { 
+        path: 'sessions', 
+        loadComponent: () => import('./sessions-history/sessions-history').then(m => m.SessionsHistoryComponent)
+      },
+      
+      // 🆕 Analytics de sesión (HOST)
+      { 
+        path: 'analytics/session/:sessionId', 
+        loadComponent: () => import('./analytics/session-analytics/session-analytics').then(m => m.SessionAnalyticsComponent)
+      },
     ],
   },
   {

@@ -55,8 +55,8 @@ import { AuthService } from '../../services/auth.service';
             </li>
             <li>
               <a
-                routerLink="/host/analytics"
-                [class.active]="isActive('/host/analytics')"
+                routerLink="/host/sessions"
+                [class.active]="isActive('/host/sessions')"
               >
                 <mat-icon fontIcon="bar_chart"></mat-icon>
                 Analíticas

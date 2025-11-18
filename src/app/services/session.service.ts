@@ -1,7 +1,13 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environment/environment';
-import { Participant, QuizSessionOut, QuestionSessionOut } from '../models/session.model';
+import { 
+  Participant, 
+  QuizSessionOut, 
+  QuestionSessionOut,
+  SessionListItem,
+  SessionAnalytics
+} from '../models/session.model';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
@@ -86,7 +92,6 @@ export class SessionService {
     const savedAvatar = localStorage.getItem('avatar_url');
 
     if (!savedAccess || savedCode !== code) {
-      // No hay sesión previa o el código cambió
       return false;
     }
 
@@ -223,7 +228,6 @@ export class SessionService {
     });
   }
 
-
   // =======================================================
   // 📡 Sistema de listeners para eventos WS dinámicos
   // =======================================================
@@ -245,7 +249,6 @@ export class SessionService {
     );
   }
 
-  // 🔹 Método para disparar los listeners cuando llega un evento
   private emit(event: string, data?: any) {
     const arr = this.listeners.get(event);
     if (arr) {
@@ -316,5 +319,43 @@ export class SessionService {
   disconnect() {
     this.socket?.close();
     this.isConnected.set(false);
+  }
+
+  // =======================================================
+  // 🆕 MÉTODOS DE ANALYTICS
+  // =======================================================
+
+  /**
+   * Lista sesiones del usuario autenticado (HOST)
+   * @param quizId - Filtro opcional por quiz
+   * @param status - Filtro opcional: "active" | "finished"
+   * @param limit - Límite de resultados (default: 20)
+   * @param offset - Paginación (default: 0)
+   */
+  async listSessions(
+    quizId?: number,
+    status?: string,
+    limit = 20,
+    offset = 0
+  ): Promise<SessionListItem[]> {
+    const params: any = { limit, offset };
+    if (quizId) params.quiz_id = quizId;
+    if (status) params.status = status;
+
+    return await this.http
+      .get<SessionListItem[]>(this.apiUrl, { params })
+      .toPromise() || [];
+  }
+
+  /**
+   * Obtiene analytics completos de una sesión
+   * - Para HOST (mode=live): estadísticas globales + por pregunta + insights
+   * - Para PLAYER (mode=self): incluye además breakdown personal
+   * @param sessionId - ID de la sesión
+   */
+  async getSessionAnalytics(sessionId: number): Promise<SessionAnalytics> {
+    return await this.http
+      .get<SessionAnalytics>(`${this.apiUrl}/${sessionId}/analytics`)
+      .toPromise() as SessionAnalytics;
   }
 }

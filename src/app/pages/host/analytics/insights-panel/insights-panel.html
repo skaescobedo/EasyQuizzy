@@ -1,0 +1,82 @@
+<div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-5 mb-8">
+  <div class="flex items-start gap-3">
+    <mat-icon fontIcon="lightbulb" class="text-yellow-600 dark:text-yellow-500 text-2xl"></mat-icon>
+    <div class="flex-1">
+      <h3 class="font-semibold text-lg text-[var(--color-text)] mb-3">
+        💡 Insights y recomendaciones
+      </h3>
+
+      <!-- Pregunta más difícil -->
+      @if (insights.hardest_question) {
+        <div class="mb-3 pb-3 border-b border-yellow-200 dark:border-yellow-800">
+          <p class="text-sm font-medium text-[var(--color-text)] mb-1">
+            📉 Pregunta más difícil:
+          </p>
+          <p class="text-sm text-[var(--color-muted)]">
+            <span class="font-medium">Pregunta {{ insights.hardest_question.order_index }}:</span>
+            "{{ insights.hardest_question.question_text }}"
+            <span class="text-red-600 font-semibold ml-1">
+              ({{ insights.hardest_question.accuracy_rate | number: '1.0-0' }}% de acierto)
+            </span>
+          </p>
+        </div>
+      }
+
+      <!-- Pregunta más fácil -->
+      @if (insights.easiest_question) {
+        <div class="mb-3 pb-3 border-b border-yellow-200 dark:border-yellow-800">
+          <p class="text-sm font-medium text-[var(--color-text)] mb-1">
+            📈 Pregunta más fácil:
+          </p>
+          <p class="text-sm text-[var(--color-muted)]">
+            <span class="font-medium">Pregunta {{ insights.easiest_question.order_index }}:</span>
+            "{{ insights.easiest_question.question_text }}"
+            <span class="text-green-600 font-semibold ml-1">
+              ({{ insights.easiest_question.accuracy_rate | number: '1.0-0' }}% de acierto)
+            </span>
+          </p>
+        </div>
+      }
+
+      <!-- Preguntas difíciles (< 50%) -->
+      @if (insights.difficult_questions && insights.difficult_questions.length > 0) {
+        <div class="mb-3 pb-3 border-b border-yellow-200 dark:border-yellow-800">
+          <p class="text-sm font-medium text-[var(--color-text)] mb-2">
+            ⚠️ Preguntas con menos del 50% de acierto:
+          </p>
+          <ul class="space-y-1 text-sm text-[var(--color-muted)]">
+            @for (q of insights.difficult_questions; track q.order_index) {
+              <li class="flex items-start gap-2">
+                <mat-icon fontIcon="arrow_right" class="text-yellow-600 text-base mt-0.5"></mat-icon>
+                <span>
+                  <span class="font-medium">Pregunta {{ q.order_index }}:</span>
+                  "{{ q.question_text }}"
+                  <span class="text-red-600 font-semibold">
+                    ({{ q.accuracy_rate | number: '1.0-0' }}%)
+                  </span>
+                </span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Sugerencias automáticas -->
+      @if (insights.suggestions && insights.suggestions.length > 0) {
+        <div>
+          <p class="text-sm font-medium text-[var(--color-text)] mb-2">
+            💬 Sugerencias:
+          </p>
+          <ul class="space-y-1 text-sm text-[var(--color-muted)]">
+            @for (suggestion of insights.suggestions; track $index) {
+              <li class="flex items-start gap-2">
+                <mat-icon fontIcon="check_circle" class="text-yellow-600 text-base mt-0.5"></mat-icon>
+                <span>{{ suggestion }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+  </div>
+</div>

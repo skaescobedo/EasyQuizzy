@@ -1,0 +1,114 @@
+<div class="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl p-4 mb-4">
+  <!-- Header con toggle -->
+  <div class="flex justify-between items-start mb-2">
+    <div class="flex items-start gap-3 flex-1">
+      <button
+        type="button"
+        (click)="toggle()"
+        class="w-8 h-8 rounded-full border border-[var(--color-border)] inline-flex items-center justify-center hover:bg-[var(--color-bg)] transition mt-1"
+        [title]="collapsed() ? 'Expandir' : 'Contraer'"
+      >
+        <mat-icon
+          fontIcon="expand_more"
+          [ngClass]="!collapsed() ? 'rotate-180 transition-transform' : 'transition-transform'"
+        ></mat-icon>
+      </button>
+
+      <div class="flex-1">
+        <h4 class="font-semibold text-[var(--color-primary)] mb-1">
+          Pregunta {{ question.order_index }}
+        </h4>
+        <p class="text-[var(--color-text)]">{{ question.question_text }}</p>
+      </div>
+    </div>
+
+    <!-- Badge de precisión -->
+    <div class="text-right ml-3">
+      <span
+        class="text-2xl font-bold"
+        [ngClass]="getAccuracyColor(question.accuracy_rate)"
+      >
+        {{ question.accuracy_rate | number: '1.0-0' }}%
+      </span>
+      <p class="text-xs text-[var(--color-muted)]">Precisión</p>
+    </div>
+  </div>
+
+  <!-- Stats resumidas (siempre visibles) -->
+  <div class="flex flex-wrap gap-4 text-sm text-[var(--color-muted)] mt-3 ml-11">
+    <span>
+      <mat-icon fontIcon="check_circle" class="text-green-600 text-base align-middle"></mat-icon>
+      {{ question.correct_count }} correctas
+    </span>
+    <span>
+      <mat-icon fontIcon="cancel" class="text-red-600 text-base align-middle"></mat-icon>
+      {{ question.incorrect_count }} incorrectas
+    </span>
+    <span>
+      <mat-icon fontIcon="timer" class="text-orange-600 text-base align-middle"></mat-icon>
+      {{ (question.avg_response_time_ms / 1000) | number: '1.1-1' }}s promedio
+    </span>
+    <span>
+      {{ question.total_responses }}/{{ totalParticipants }} respondieron
+    </span>
+  </div>
+
+  <!-- Contenido expandible -->
+  @if (!collapsed()) {
+    <div class="mt-4 ml-11 border-t border-[var(--color-border)] pt-4">
+      <!-- Distribución de respuestas (solo para multiple choice / true false) -->
+      @if (question.question_type !== 'short_answer' && question.answer_distribution.length > 0) {
+        <h5 class="font-medium text-sm text-[var(--color-text)] mb-3">
+          Distribución de respuestas:
+        </h5>
+
+        <div class="space-y-2">
+          @for (answer of question.answer_distribution; track answer.answer_id) {
+            <div class="flex items-center gap-2">
+              <mat-icon
+                [fontIcon]="answer.is_correct ? 'check_circle' : 'cancel'"
+                [ngClass]="answer.is_correct ? 'text-green-600' : 'text-red-600'"
+                class="text-base"
+              ></mat-icon>
+
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-sm text-[var(--color-text)]">{{ answer.answer_text }}</span>
+                  <span class="text-sm font-medium text-[var(--color-muted)]">
+                    {{ answer.selection_percentage | number: '1.0-0' }}% ({{ answer.selection_count }})
+                  </span>
+                </div>
+
+                <!-- Barra de progreso -->
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                  <div
+                    [ngClass]="getBarColor(answer.is_correct)"
+                    class="h-full transition-all duration-300"
+                    [style.width]="getBarWidth(answer.selection_percentage)"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Respuestas incorrectas comunes (short answer) -->
+      @if (question.question_type === 'short_answer' && question.common_wrong_answers.length > 0) {
+        <h5 class="font-medium text-sm text-[var(--color-text)] mb-3">
+          Respuestas incorrectas comunes:
+        </h5>
+
+        <ul class="space-y-1 text-sm text-[var(--color-muted)]">
+          @for (wrong of question.common_wrong_answers; track $index) {
+            <li class="flex items-center gap-2">
+              <mat-icon fontIcon="close" class="text-red-600 text-base"></mat-icon>
+              <span>"{{ wrong.answer }}"</span>
+              <span class="text-xs">({{ wrong.count }} veces)</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+</div>

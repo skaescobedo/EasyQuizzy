@@ -1,0 +1,111 @@
+<section class="max-w-6xl mx-auto p-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+      <button
+        type="button"
+        (click)="goBack()"
+        class="text-[var(--color-primary)] hover:underline inline-flex items-center gap-1"
+      >
+        <mat-icon fontIcon="arrow_back"></mat-icon>
+        Regresar
+      </button>
+      @if (analytics()) {
+        <h1 class="text-2xl font-semibold text-[var(--color-text)]">
+          {{ analytics()!.session_info.quiz_title }}
+        </h1>
+      }
+    </div>
+
+    @if (analytics()) {
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-[var(--color-muted)]">
+          Código: {{ analytics()!.session_info.code || 'N/A' }}
+        </span>
+        <button
+          type="button"
+          (click)="exportCSV()"
+          class="bg-[var(--color-bg-secondary)] text-[var(--color-text)] px-4 py-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg)] transition text-sm inline-flex items-center gap-2"
+        >
+          <mat-icon fontIcon="download" class="text-base"></mat-icon>
+          Exportar CSV
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="flex items-center justify-center py-20">
+      <div class="text-center">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-[var(--color-primary)] border-r-transparent"></div>
+        <p class="mt-4 text-[var(--color-muted)]">Cargando analytics...</p>
+      </div>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (error() && !loading()) {
+    <div class="p-4 border border-[var(--color-border)] rounded-xl text-[var(--color-danger)] bg-red-50 dark:bg-red-900/20">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Analytics -->
+  @if (!loading() && !error() && analytics()) {
+    <div>
+      <!-- 📊 Tarjetas de métricas globales -->
+      <app-global-stats-card [stats]="analytics()!.global_stats"></app-global-stats-card>
+
+      <!-- 💡 Panel de insights -->
+      @if (analytics()!.insights) {
+        <app-insights-panel [insights]="analytics()!.insights"></app-insights-panel>
+      }
+
+      <!-- 📝 Análisis por pregunta -->
+      <div class="mb-6">
+        <h2 class="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-center gap-2">
+          <mat-icon fontIcon="quiz" class="text-[var(--color-primary)]"></mat-icon>
+          Análisis por pregunta
+        </h2>
+
+        @if (analytics()!.question_analytics.length === 0) {
+          <p class="text-[var(--color-muted)] text-center py-10">
+            No hay datos de preguntas disponibles.
+          </p>
+        } @else {
+          <div class="space-y-4">
+            @for (question of analytics()!.question_analytics; track question.question_id) {
+              <app-question-analytics-item
+                [question]="question"
+                [totalParticipants]="analytics()!.global_stats.total_participants"
+              ></app-question-analytics-item>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Metadata adicional -->
+      <div class="mt-8 pt-6 border-t border-[var(--color-border)] text-sm text-[var(--color-muted)]">
+        <div class="flex flex-wrap gap-4">
+          <span>
+            <strong>Modo:</strong>
+            {{ analytics()!.session_info.mode === 'live' ? 'En vivo' : 'Autoestudio' }}
+          </span>
+          @if (analytics()!.session_info.created_at) {
+            <span>
+              <strong>Creada:</strong>
+              {{ analytics()!.session_info.created_at | date: 'medium' }}
+            </span>
+          }
+          @if (analytics()!.session_info.ended_at) {
+            <span>
+              <strong>Finalizada:</strong>
+              {{ analytics()!.session_info.ended_at | date: 'medium' }}
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</section>

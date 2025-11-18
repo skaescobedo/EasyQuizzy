@@ -1,0 +1,142 @@
+<section class="max-w-6xl mx-auto p-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold text-[var(--color-text)]">Historial de sesiones</h1>
+      <p class="text-[var(--color-muted)]">Consulta tus sesiones anteriores y sus estadísticas</p>
+    </div>
+    <a routerLink="/host" class="text-[var(--color-primary)] hover:underline inline-flex items-center gap-1">
+      <mat-icon fontIcon="arrow_back"></mat-icon>
+      Regresar
+    </a>
+  </div>
+
+  <!-- Filtros -->
+  <div class="flex flex-wrap gap-2 mb-6">
+    <button
+      type="button"
+      (click)="filterByStatus(undefined)"
+      [class.bg-[var(--color-primary)]]="!selectedStatus()"
+      [class.text-white]="!selectedStatus()"
+      class="px-4 py-2 rounded-lg border border-[var(--color-border)] hover:opacity-90 transition text-sm"
+    >
+      Todas
+    </button>
+    <button
+      type="button"
+      (click)="filterByStatus('finished')"
+      [class.bg-[var(--color-primary)]]="selectedStatus() === 'finished'"
+      [class.text-white]="selectedStatus() === 'finished'"
+      class="px-4 py-2 rounded-lg border border-[var(--color-border)] hover:opacity-90 transition text-sm"
+    >
+      Finalizadas
+    </button>
+    <button
+      type="button"
+      (click)="filterByStatus('active')"
+      [class.bg-[var(--color-primary)]]="selectedStatus() === 'active'"
+      [class.text-white]="selectedStatus() === 'active'"
+      class="px-4 py-2 rounded-lg border border-[var(--color-border)] hover:opacity-90 transition text-sm"
+    >
+      Activas
+    </button>
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="p-4 border border-[var(--color-border)] rounded-xl text-[var(--color-danger)] bg-red-50 dark:bg-red-900/20 mb-6">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Loading inicial -->
+  @if (loading() && sessions().length === 0) {
+    <div class="flex items-center justify-center py-20">
+      <div class="text-center">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-[var(--color-primary)] border-r-transparent"></div>
+        <p class="mt-4 text-[var(--color-muted)]">Cargando sesiones...</p>
+      </div>
+    </div>
+  }
+
+  <!-- Sin sesiones -->
+  @if (!loading() && sessions().length === 0 && !error()) {
+    <div class="text-center py-20">
+      <mat-icon fontIcon="history" class="text-6xl text-[var(--color-muted)] opacity-50 mb-4"></mat-icon>
+      <p class="text-[var(--color-muted)]">No tienes sesiones todavía.</p>
+      <p class="text-sm text-[var(--color-muted)] mt-2">Las sesiones que crees aparecerán aquí.</p>
+    </div>
+  }
+
+  <!-- Lista de sesiones -->
+  @if (sessions().length > 0) {
+    <div class="grid gap-4">
+      @for (session of sessions(); track session.session_id) {
+        <div class="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl p-5 hover:shadow-lg transition">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <!-- Info principal -->
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <h3 class="text-lg font-semibold text-[var(--color-text)]">{{ session.quiz_title }}</h3>
+                <span
+                  class="text-xs px-2 py-1 rounded-full border"
+                  [ngClass]="getStatusBadgeClass(session.status)"
+                >
+                  {{ getStatusLabel(session.status) }}
+                </span>
+                <span class="text-xs px-2 py-1 rounded-full border border-[var(--color-border)] text-[var(--color-muted)]">
+                  {{ getModeLabel(session.mode) }}
+                </span>
+              </div>
+
+              <div class="flex flex-wrap gap-4 text-sm text-[var(--color-muted)]">
+                <span class="inline-flex items-center gap-1">
+                  <mat-icon fontIcon="tag" class="text-base"></mat-icon>
+                  Código: {{ session.code || 'N/A' }}
+                </span>
+                <span class="inline-flex items-center gap-1">
+                  <mat-icon fontIcon="group" class="text-base"></mat-icon>
+                  {{ session.participant_count }} participantes
+                </span>
+                <span class="inline-flex items-center gap-1">
+                  <mat-icon fontIcon="trending_up" class="text-base"></mat-icon>
+                  Promedio: {{ session.avg_score | number: '1.1-1' }}
+                </span>
+                <span class="inline-flex items-center gap-1">
+                  <mat-icon fontIcon="calendar_today" class="text-base"></mat-icon>
+                  {{ session.created_at | date: 'short' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex flex-col sm:flex-row gap-2">
+              <button
+                type="button"
+                (click)="viewAnalytics(session.session_id)"
+                class="bg-[var(--color-primary)] text-white px-4 py-2 rounded-lg hover:opacity-90 transition inline-flex items-center justify-center gap-2 text-sm font-medium"
+              >
+                <mat-icon fontIcon="bar_chart" class="text-base"></mat-icon>
+                Ver estadísticas
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Botón cargar más -->
+    @if (hasMore()) {
+      <div class="flex justify-center mt-8">
+        <button
+          type="button"
+          (click)="loadMore()"
+          [disabled]="loading()"
+          class="bg-[var(--color-bg-secondary)] text-[var(--color-text)] px-6 py-3 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg)] transition disabled:opacity-50"
+        >
+          {{ loading() ? 'Cargando...' : 'Cargar más' }}
+        </button>
+      </div>
+    }
+  }
+</section>

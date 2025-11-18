@@ -22,6 +22,12 @@ export const participantRoutes: Routes = [
     component: SessionPlayComponent,
   },
 
+  // 🆕 Analytics personales (PLAYER - autoestudio)
+  { 
+    path: 'analytics/personal/:sessionId', 
+    loadComponent: () => import('./analytics/personal-analytics/personal-analytics').then(m => m.PersonalAnalyticsComponent)
+  },
+
   // 4️⃣ Ruta con código (debe ir al final)
   {
     path: ':code',

@@ -1,0 +1,45 @@
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <!-- 👥 Total Participantes -->
+  <div class="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl p-4 flex items-center gap-3 shadow-sm">
+    <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+      <mat-icon fontIcon="group" class="text-blue-600 dark:text-blue-400"></mat-icon>
+    </div>
+    <div>
+      <p class="text-2xl font-bold text-[var(--color-text)]">{{ stats.total_participants }}</p>
+      <p class="text-sm text-[var(--color-muted)]">Participantes</p>
+    </div>
+  </div>
+
+  <!-- 📊 Promedio -->
+  <div class="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl p-4 flex items-center gap-3 shadow-sm">
+    <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+      <mat-icon fontIcon="trending_up" class="text-green-600 dark:text-green-400"></mat-icon>
+    </div>
+    <div>
+      <p class="text-2xl font-bold text-[var(--color-text)]">{{ stats.avg_score | number: '1.1-1' }}</p>
+      <p class="text-sm text-[var(--color-muted)]">Puntaje Promedio</p>
+    </div>
+  </div>
+
+  <!-- ✅ Precisión -->
+  <div class="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl p-4 flex items-center gap-3 shadow-sm">
+    <div class="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+      <mat-icon fontIcon="check_circle" class="text-purple-600 dark:text-purple-400"></mat-icon>
+    </div>
+    <div>
+      <p class="text-2xl font-bold text-[var(--color-text)]">{{ stats.overall_accuracy | number: '1.0-0' }}%</p>
+      <p class="text-sm text-[var(--color-muted)]">Precisión</p>
+    </div>
+  </div>
+
+  <!-- ⏱️ Tiempo Promedio -->
+  <div class="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl p-4 flex items-center gap-3 shadow-sm">
+    <div class="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
+      <mat-icon fontIcon="timer" class="text-orange-600 dark:text-orange-400"></mat-icon>
+    </div>
+    <div>
+      <p class="text-2xl font-bold text-[var(--color-text)]">{{ (stats.avg_response_time_ms / 1000) | number: '1.1-1' }}s</p>
+      <p class="text-sm text-[var(--color-muted)]">Tiempo Promedio</p>
+    </div>
+  </div>
+</div>
