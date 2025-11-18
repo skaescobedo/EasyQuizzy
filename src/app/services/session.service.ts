@@ -328,19 +328,19 @@ export class SessionService {
   /**
    * Lista sesiones del usuario autenticado (HOST)
    * @param quizId - Filtro opcional por quiz
-   * @param status - Filtro opcional: "active" | "finished"
+   * @param mode - Filtro opcional: "self" | "live"  // 🔄 CAMBIO AQUÍ
    * @param limit - Límite de resultados (default: 20)
    * @param offset - Paginación (default: 0)
    */
   async listSessions(
     quizId?: number,
-    status?: string,
+    mode?: string,  // 🔄 Cambiado de "status" a "mode"
     limit = 20,
     offset = 0
   ): Promise<SessionListItem[]> {
     const params: any = { limit, offset };
     if (quizId) params.quiz_id = quizId;
-    if (status) params.status = status;
+    if (mode) params.mode = mode;  // 🔄 Cambiado de "status" a "mode"
 
     return await this.http
       .get<SessionListItem[]>(this.apiUrl, { params })

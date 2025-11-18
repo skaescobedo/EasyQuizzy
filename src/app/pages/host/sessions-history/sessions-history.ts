@@ -21,7 +21,7 @@ export class SessionsHistoryComponent implements OnInit {
   error = signal<string | null>(null);
   
   // Filtros
-  selectedStatus = signal<string | undefined>(undefined);
+  selectedMode = signal<string | undefined>(undefined);
   
   // Paginación
   limit = 20;
@@ -46,7 +46,7 @@ export class SessionsHistoryComponent implements OnInit {
 
       const data = await this.sessionService.listSessions(
         undefined,
-        this.selectedStatus(),
+        this.selectedMode(),
         this.limit,
         this.offset()
       );
@@ -66,8 +66,8 @@ export class SessionsHistoryComponent implements OnInit {
     }
   }
 
-  async filterByStatus(status?: string) {
-    this.selectedStatus.set(status);
+  async filterByMode(mode?: string) {
+    this.selectedMode.set(mode);
     await this.loadSessions(true);
   }
 
@@ -81,34 +81,13 @@ export class SessionsHistoryComponent implements OnInit {
     this.router.navigate(['/host/analytics/session', sessionId]);
   }
 
-  getStatusBadgeClass(status: string): string {
-    switch (status) {
-      case 'active':
-      case 'pending':
-        return 'bg-green-100 text-green-700 border-green-300';
-      case 'ended':
-      case 'finished':
-        return 'bg-gray-100 text-gray-700 border-gray-300';
-      default:
-        return 'bg-blue-100 text-blue-700 border-blue-300';
-    }
-  }
-
-  getStatusLabel(status: string): string {
-    switch (status) {
-      case 'active':
-        return 'Activa';
-      case 'pending':
-        return 'Pendiente';
-      case 'ended':
-      case 'finished':
-        return 'Finalizada';
-      default:
-        return status;
-    }
-  }
-
   getModeLabel(mode: string): string {
     return mode === 'live' ? 'En vivo' : 'Autoestudio';
+  }
+
+  getModeBadgeClass(mode: string): string {
+    return mode === 'live' 
+      ? 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300'
+      : 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300';
   }
 }

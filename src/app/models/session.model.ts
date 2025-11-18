@@ -46,12 +46,12 @@ export interface QuizSessionOut {
 // === Lista de sesiones (historial) ===
 export interface SessionListItem {
   session_id: number;
-  code: string;
+  code: string | null;
   quiz_title: string;
   quiz_id: number;
-  mode: string;
-  status: string;
-  created_at: string;
+  mode: 'live' | 'self';
+  // status: string;  // ❌ ELIMINAR esta línea
+  created_at: string | null;
   ended_at: string | null;
   participant_count: number;
   avg_score: number;

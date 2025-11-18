@@ -15,30 +15,30 @@
   <div class="flex flex-wrap gap-2 mb-6">
     <button
       type="button"
-      (click)="filterByStatus(undefined)"
-      [class.bg-[var(--color-primary)]]="!selectedStatus()"
-      [class.text-white]="!selectedStatus()"
+      (click)="filterByMode(undefined)"
+      [class.bg-[var(--color-primary)]]="!selectedMode()"
+      [class.text-white]="!selectedMode()"
       class="px-4 py-2 rounded-lg border border-[var(--color-border)] hover:opacity-90 transition text-sm"
     >
       Todas
     </button>
     <button
       type="button"
-      (click)="filterByStatus('finished')"
-      [class.bg-[var(--color-primary)]]="selectedStatus() === 'finished'"
-      [class.text-white]="selectedStatus() === 'finished'"
+      (click)="filterByMode('live')"
+      [class.bg-[var(--color-primary)]]="selectedMode() === 'live'"
+      [class.text-white]="selectedMode() === 'live'"
       class="px-4 py-2 rounded-lg border border-[var(--color-border)] hover:opacity-90 transition text-sm"
     >
-      Finalizadas
+      Grupales
     </button>
     <button
       type="button"
-      (click)="filterByStatus('active')"
-      [class.bg-[var(--color-primary)]]="selectedStatus() === 'active'"
-      [class.text-white]="selectedStatus() === 'active'"
+      (click)="filterByMode('self')"
+      [class.bg-[var(--color-primary)]]="selectedMode() === 'self'"
+      [class.text-white]="selectedMode() === 'self'"
       class="px-4 py-2 rounded-lg border border-[var(--color-border)] hover:opacity-90 transition text-sm"
     >
-      Activas
+      Autoestudio
     </button>
   </div>
 
@@ -78,13 +78,10 @@
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-2">
                 <h3 class="text-lg font-semibold text-[var(--color-text)]">{{ session.quiz_title }}</h3>
-                <span
+                <span 
                   class="text-xs px-2 py-1 rounded-full border"
-                  [ngClass]="getStatusBadgeClass(session.status)"
+                  [ngClass]="getModeBadgeClass(session.mode)"
                 >
-                  {{ getStatusLabel(session.status) }}
-                </span>
-                <span class="text-xs px-2 py-1 rounded-full border border-[var(--color-border)] text-[var(--color-muted)]">
                   {{ getModeLabel(session.mode) }}
                 </span>
               </div>
