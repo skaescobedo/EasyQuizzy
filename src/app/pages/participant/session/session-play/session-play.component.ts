@@ -253,6 +253,9 @@ export class SessionPlayComponent {
   }
 
   viewDetailedResults() {
-    alert("🔍 Aquí puedes abrir una vista con más estadísticas, ranking extendido, etc.");
+    const sessionId = this.session.sessionId();
+    if (sessionId) {
+      this.router.navigate(['/quizz/analytics/personal', sessionId]);
+    }
   }
 }

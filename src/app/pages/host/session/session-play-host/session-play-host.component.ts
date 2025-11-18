@@ -120,9 +120,12 @@ export class SessionPlayHostComponent {
   // ==============================
   // 📊 Ver resultados detallados
   // ==============================
-  viewDetailedResults() {
-    alert("🔍 Aquí puedes abrir una vista con más estadísticas, ranking extendido, etc.");
+ viewDetailedResults() {
+  const sessionId = this.session.sessionId();
+  if (sessionId) {
+    this.router.navigate(['/host/analytics/session', sessionId]);
   }
+}
 
   // ==============================
   // 🏠 Volver al inicio
