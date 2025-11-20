@@ -21,13 +21,13 @@ export class QuestionAnalyticsItemComponent {
   }
 
   getAccuracyColor(accuracy: number): string {
-    if (accuracy >= 75) return 'text-green-600';
-    if (accuracy >= 50) return 'text-yellow-600';
-    return 'text-red-600';
+    if (accuracy >= 75) return 'text-[var(--color-success)]';
+    if (accuracy >= 50) return 'text-[var(--color-primary)]';
+    return 'text-[var(--color-danger)]';
   }
 
   getBarColor(isCorrect: boolean): string {
-    return isCorrect ? 'bg-green-500' : 'bg-red-400';
+    return isCorrect ? 'bg-[var(--color-success)]' : 'bg-[var(--color-danger)]';
   }
 
   getBarWidth(percentage: number): string {

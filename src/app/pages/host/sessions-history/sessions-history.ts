@@ -87,7 +87,7 @@ export class SessionsHistoryComponent implements OnInit {
 
   getModeBadgeClass(mode: string): string {
     return mode === 'live' 
-      ? 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300'
-      : 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300';
+      ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]'
+      : 'bg-[var(--color-secondary)] text-white border-[var(--color-secondary)]';
   }
 }

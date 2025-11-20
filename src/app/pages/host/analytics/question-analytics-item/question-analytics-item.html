@@ -37,15 +37,15 @@
   <!-- Stats resumidas (siempre visibles) -->
   <div class="flex flex-wrap gap-4 text-sm text-[var(--color-muted)] mt-3 ml-11">
     <span>
-      <mat-icon fontIcon="check_circle" class="text-green-600 text-base align-middle"></mat-icon>
+      <mat-icon fontIcon="check_circle" class="text-[var(--color-success)] text-base align-middle"></mat-icon>
       {{ question.correct_count }} correctas
     </span>
     <span>
-      <mat-icon fontIcon="cancel" class="text-red-600 text-base align-middle"></mat-icon>
+      <mat-icon fontIcon="cancel" class="text-[var(--color-danger)] text-base align-middle"></mat-icon>
       {{ question.incorrect_count }} incorrectas
     </span>
     <span>
-      <mat-icon fontIcon="timer" class="text-orange-600 text-base align-middle"></mat-icon>
+      <mat-icon fontIcon="timer" class="text-[var(--color-primary)] text-base align-middle"></mat-icon>
       {{ (question.avg_response_time_ms / 1000) | number: '1.1-1' }}s promedio
     </span>
     <span>
@@ -67,7 +67,7 @@
             <div class="flex items-center gap-2">
               <mat-icon
                 [fontIcon]="answer.is_correct ? 'check_circle' : 'cancel'"
-                [ngClass]="answer.is_correct ? 'text-green-600' : 'text-red-600'"
+                [ngClass]="answer.is_correct ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'"
                 class="text-base"
               ></mat-icon>
 
@@ -80,7 +80,7 @@
                 </div>
 
                 <!-- Barra de progreso -->
-                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                <div class="w-full bg-[var(--color-bg)] rounded-full h-2 overflow-hidden border border-[var(--color-border)]">
                   <div
                     [ngClass]="getBarColor(answer.is_correct)"
                     class="h-full transition-all duration-300"
@@ -102,7 +102,7 @@
         <ul class="space-y-1 text-sm text-[var(--color-muted)]">
           @for (wrong of question.common_wrong_answers; track $index) {
             <li class="flex items-center gap-2">
-              <mat-icon fontIcon="close" class="text-red-600 text-base"></mat-icon>
+              <mat-icon fontIcon="close" class="text-[var(--color-danger)] text-base"></mat-icon>
               <span>"{{ wrong.answer }}"</span>
               <span class="text-xs">({{ wrong.count }} veces)</span>
             </li>
