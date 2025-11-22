@@ -57,6 +57,141 @@
       <!-- 📊 Tarjetas de métricas globales -->
       <app-global-stats-card [stats]="analytics()!.global_stats"></app-global-stats-card>
 
+      <!-- 🎯 NUEVA SECCIÓN: Ranking TOPSIS -->
+      @if (topsisData(); as topsis) {
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-center gap-2">
+            <mat-icon fontIcon="analytics" class="text-[var(--color-primary)]"></mat-icon>
+            Ranking TOPSIS (Análisis Ponderado)
+          </h2>
+
+          <div class="bg-[var(--color-bg-secondary)] p-4 rounded-xl border border-[var(--color-border)] mb-4">
+            <p class="text-sm text-[var(--color-muted)] italic">
+              ℹ️ Este ranking considera el desempeño en cada categoría según su peso/importancia
+            </p>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-[var(--color-border)] overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-gray-900">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Rank
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Participante
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Puntaje Bruto
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Score TOPSIS
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Acción
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                  @for (p of topsis.ranking; track p.participant_id) {
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition">
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-bold text-[var(--color-text)]">
+                          {{ p.topsis_rank }}
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center gap-3">
+                          <img
+                            [src]="p.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
+                            class="w-8 h-8 rounded-full border border-gray-200"
+                          />
+                          <span class="text-sm font-medium text-[var(--color-text)]">
+                            {{ p.nickname }}
+                          </span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-[var(--color-text)]">
+                          {{ p.raw_score }} pts
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center gap-2">
+                          <div class="flex-1 bg-gray-200 rounded-full h-2 max-w-[100px]">
+                            <div
+                              [class]="getCategoryColor(p.topsis_score)"
+                              [style.width.%]="p.topsis_score"
+                              class="h-2 rounded-full transition-all"
+                            ></div>
+                          </div>
+                          <span class="text-sm font-bold" [class]="getCategoryTextColor(p.topsis_score)">
+                            {{ p.topsis_score }}%
+                          </span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <button
+                          (click)="toggleParticipantDetails(p.participant_id)"
+                          class="text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] text-sm font-medium flex items-center gap-1"
+                        >
+                          <mat-icon fontIcon="visibility" class="text-base"></mat-icon>
+                          Ver
+                        </button>
+                      </td>
+                    </tr>
+
+                    <!-- Desglose expandible -->
+                    @if (expandedParticipant() === p.participant_id) {
+                      <tr>
+                        <td colspan="5" class="px-6 py-4 bg-gray-50 dark:bg-gray-900/30">
+                          <div class="space-y-3">
+                            <h4 class="font-semibold text-sm text-[var(--color-text)] mb-3">
+                              📋 Desglose de {{ p.nickname }}
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              @for (catEntry of getCategoryEntries(p); track catEntry[0]) {
+                                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                                  <div class="flex justify-between items-center mb-2">
+                                    <span class="font-semibold text-sm text-[var(--color-text)]">
+                                      {{ catEntry[0] }}
+                                    </span>
+                                    <span class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded">
+                                      Peso: {{ (catEntry[1].weight * 100).toFixed(0) }}%
+                                    </span>
+                                  </div>
+                                  <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                    {{ catEntry[1].correct }}/{{ catEntry[1].total }} correctas
+                                    <span class="font-bold ml-1" [class]="getCategoryTextColor(catEntry[1].score)">
+                                      ({{ catEntry[1].score }}%)
+                                    </span>
+                                  </div>
+                                  <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div
+                                      [class]="getCategoryColor(catEntry[1].score)"
+                                      [style.width.%]="catEntry[1].score"
+                                      class="h-2 rounded-full transition-all"
+                                    ></div>
+                                  </div>
+                                  <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                    💡 Contribución: {{ (catEntry[1].score * catEntry[1].weight).toFixed(1) }} puntos
+                                  </div>
+                                </div>
+                              }
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      }
+
       <!-- 💡 Panel de insights -->
       @if (analytics()!.insights) {
         <app-insights-panel [insights]="analytics()!.insights"></app-insights-panel>

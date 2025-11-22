@@ -50,7 +50,6 @@ export interface SessionListItem {
   quiz_title: string;
   quiz_id: number;
   mode: 'live' | 'self';
-  // status: string;  // ❌ ELIMINAR esta línea
   created_at: string | null;
   ended_at: string | null;
   participant_count: number;
@@ -163,4 +162,33 @@ export interface SessionAnalytics {
   insights: Insights;
   personal_breakdown?: PersonalBreakdown[];  // Solo en autoestudio
   personal_stats?: PersonalStats;            // Solo en autoestudio
+}
+
+// ===================================================
+// 🎯 INTERFACES PARA TOPSIS (NUEVO)
+// ===================================================
+
+// === Desempeño por categoría ===
+export interface CategoryPerformance {
+  score: number;        // Porcentaje 0-100
+  weight: number;       // Peso de la categoría (decimal 0-1)
+  correct: number;      // Preguntas correctas
+  total: number;        // Total de preguntas en esa categoría
+}
+
+// === Participante con datos TOPSIS ===
+export interface TopsisParticipant {
+  participant_id: number;
+  nickname: string;
+  avatar_url?: string;
+  raw_score: number;                                    // Score bruto (suma de puntos)
+  topsis_score: number;                                 // Score TOPSIS (0-100%)
+  topsis_rank: number;                                  // Ranking TOPSIS
+  category_performance: { [categoryName: string]: CategoryPerformance };  // Desempeño por categoría
+}
+
+// === Respuesta completa del endpoint TOPSIS ===
+export interface TopsisRanking {
+  has_categories: boolean;        // Si el quiz tiene categorías
+  ranking: TopsisParticipant[];   // Array de participantes con sus scores
 }

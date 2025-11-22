@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { SessionService } from '../../../../services/session.service';
-import { SessionAnalytics } from '../../../../models/session.model';
+import { SessionAnalytics, TopsisRanking, TopsisParticipant } from '../../../../models/session.model';
 
 @Component({
   selector: 'app-personal-analytics',
@@ -21,6 +21,10 @@ export class PersonalAnalyticsComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   sessionId = signal<number | null>(null);
+
+  // 🎯 NUEVO: Signals para TOPSIS
+  topsisData = signal<TopsisRanking | null>(null);
+  myTopsisData = signal<TopsisParticipant | null>(null);
 
   async ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('sessionId'));
@@ -41,6 +45,23 @@ export class PersonalAnalyticsComponent implements OnInit {
 
       const data = await this.sessionService.getSessionAnalytics(sessionId);
       this.analytics.set(data);
+
+      // 🎯 NUEVO: Cargar TOPSIS
+      try {
+        const topsis = await this.sessionService.fetchTopsisRanking(sessionId);
+        if (topsis.has_categories) {
+          this.topsisData.set(topsis);
+          
+          // Buscar MIS datos en el ranking TOPSIS
+          // Como es autoestudio, debería haber solo 1 participante
+          if (topsis.ranking.length > 0) {
+            this.myTopsisData.set(topsis.ranking[0]);
+          }
+        }
+      } catch (err) {
+        console.warn('No se pudo cargar TOPSIS:', err);
+      }
+
     } catch (err: any) {
       this.error.set(err?.error?.detail || 'Error al cargar analytics');
     } finally {
@@ -52,7 +73,6 @@ export class PersonalAnalyticsComponent implements OnInit {
     const quizId = this.analytics()?.session_info.quiz_id;
     if (!quizId) return;
 
-    // Crear nueva sesión de autoestudio con el mismo quiz
     this.sessionService.createSelfStudySession(quizId).then(() => {
       this.router.navigate(['/quizz/play']);
     });
@@ -72,5 +92,31 @@ export class PersonalAnalyticsComponent implements OnInit {
 
   formatTime(ms: number): string {
     return (ms / 1000).toFixed(1) + 's';
+  }
+
+  // 🎯 NUEVO: Métodos para TOPSIS
+  
+  getCategoryEntries(): [string, any][] {
+    const data = this.myTopsisData();
+    if (!data) return [];
+    return Object.entries(data.category_performance);
+  }
+
+  getCategoryColor(score: number): string {
+    if (score >= 80) return 'bg-green-500';
+    if (score >= 60) return 'bg-yellow-500';
+    return 'bg-red-500';
+  }
+
+  getCategoryTextColor(score: number): string {
+    if (score >= 80) return 'text-green-600';
+    if (score >= 60) return 'text-yellow-600';
+    return 'text-red-600';
+  }
+
+  getCategoryMessage(score: number): string {
+    if (score >= 80) return '✅ ¡Excelente! Dominaste esta categoría';
+    if (score >= 60) return '⚠️ Bien, pero hay espacio para mejorar';
+    return '⚠️ Considera repasar este tema importante';
   }
 }

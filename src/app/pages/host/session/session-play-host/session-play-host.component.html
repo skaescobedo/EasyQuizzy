@@ -7,11 +7,7 @@
       class="w-full max-w-3xl bg-[var(--color-bg)] shadow-xl rounded-2xl p-8 
              border border-[var(--color-border)] transition-all"
     >
-      <!-- ========================================================= -->
-      <!-- 🔹 MOSTRAR PREGUNTA Y TEMPORIZADOR SOLO SI NO SE MUESTRAN LOS SCORES -->
-      <!-- ========================================================= -->
       @if (!showScores() && !quizEnded()) {
-        <!-- Encabezado -->
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-2xl font-extrabold text-[var(--color-text)]">
             Pregunta número {{ session.currentQuestionIndex() + 1 }}
@@ -29,12 +25,10 @@
           </div>
         </div>
 
-        <!-- Texto de la pregunta -->
         <h1 class="text-3xl font-bold mb-6 text-center text-[var(--color-text)]">
           {{ q.question_text }}
         </h1>
 
-        <!-- Imagen (si existe) -->
         @if (q.image_url) {
           <img
             [src]="q.image_url"
@@ -43,7 +37,6 @@
           />
         }
 
-        <!-- Opciones (solo para mostrar al host, deshabilitadas) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           @for (ans of q.answers; track ans.answer_id) {
             <button
@@ -56,7 +49,6 @@
           }
         </div>
 
-        <!-- Botón de terminar -->
         <div class="text-center mt-8 flex flex-col sm:flex-row justify-center gap-4">
           <button
             (click)="endQuestion()"
@@ -69,9 +61,6 @@
         </div>
 
       } @else if (showScores() && !quizEnded()) {
-        <!-- ========================================================= -->
-        <!-- 🏆 TABLERO DE PUNTUACIONES INTERMEDIAS -->
-        <!-- ========================================================= -->
         <div class="mt-6 text-center">
           <h3 class="text-2xl font-bold text-[var(--color-primary)] mb-6 flex items-center justify-center gap-2">
             <span class="material-icons text-[var(--color-primary)] text-3xl">leaderboard</span>
@@ -100,7 +89,6 @@
             }
           </ul>
 
-
           <div class="text-center mt-8 flex flex-col sm:flex-row justify-center gap-4">
             <button
               (click)="nextQuestion()"
@@ -123,75 +111,142 @@
         </div>
 
       } @else if (quizEnded()) {
-        <!-- ========================================================= -->
-        <!-- 🎉 RESULTADOS FINALES -->
-        <!-- ========================================================= -->
         <div class="mt-6 text-center">
           <h3 class="text-3xl font-bold text-[var(--color-primary)] mb-6 flex items-center justify-center gap-2">
             <span class="material-icons text-[var(--color-primary)] text-4xl">emoji_events</span>
             Resultados Finales
           </h3>
 
-          <ul
-            class="divide-y divide-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-xl shadow-inner mb-8"
-          >
-            @for (p of rankedParticipants(); track p.nickname; let i = $index) {
-              <li class="py-4 px-6 flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                  <span class="font-bold w-6 text-[var(--color-text)] text-center">
-                    {{ i + 1 }}.
-                  </span>
+          @if (topsisData(); as topsis) {
+            <div class="flex justify-center gap-2 mb-6">
+              <button
+                [class.bg-[var(--color-primary)]]="!showTopsisRanking()"
+                [class.text-white]="!showTopsisRanking()"
+                [class.bg-gray-200]="showTopsisRanking()"
+                [class.text-gray-700]="showTopsisRanking()"
+                (click)="toggleRankingMode('normal')"
+                class="px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
+              >
+                <span class="material-icons text-sm">bar_chart</span>
+                Puntaje
+              </button>
+              <button
+                [class.bg-[var(--color-primary)]]="showTopsisRanking()"
+                [class.text-white]="showTopsisRanking()"
+                [class.bg-gray-200]="!showTopsisRanking()"
+                [class.text-gray-700]="!showTopsisRanking()"
+                (click)="toggleRankingMode('topsis')"
+                class="px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
+              >
+                <span class="material-icons text-sm">analytics</span>
+                Ponderado
+                <span class="material-icons text-xs" title="Considera la importancia de cada tema">info</span>
+              </button>
+            </div>
+          }
 
-                  <!-- Trofeos para top 3 -->
-                  @if (i === 0) {
-                    <span class="material-icons text-yellow-500">emoji_events</span>
-                  } @else if (i === 1) {
-                    <span class="material-icons text-gray-400">emoji_events</span>
-                  } @else if (i === 2) {
-                    <span class="material-icons text-amber-700">emoji_events</span>
+          @if (showTopsisRanking() && topsisData(); as topsis) {
+            <div class="mb-4 text-sm text-gray-600 italic">
+              ℹ️ Este ranking considera el desempeño en cada categoría según su importancia
+            </div>
+
+            <ul class="divide-y divide-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-xl shadow-inner mb-8">
+              @for (p of rankedTopsisParticipants(); track p.participant_id; let i = $index) {
+                <li class="py-4 px-6">
+                  <div class="flex justify-between items-center cursor-pointer" (click)="toggleParticipantDetails(p.participant_id)">
+                    <div class="flex items-center gap-3">
+                      <span class="font-bold w-6 text-[var(--color-text)] text-center">
+                        {{ p.topsis_rank }}.
+                      </span>
+                      <img
+                        [src]="p.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
+                        class="w-10 h-10 rounded-full border border-[var(--color-border)] shadow-sm"
+                      />
+                      <div class="text-left">
+                        <div class="font-semibold text-[var(--color-text)]">{{ p.nickname }}</div>
+                        <div class="text-xs text-gray-500">Puntaje: {{ p.raw_score }} pts</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <span class="font-bold text-[var(--color-primary)]">
+                        {{ p.topsis_score }}%
+                      </span>
+                      <span class="material-icons text-gray-400 text-sm">
+                        {{ expandedParticipant() === p.participant_id ? 'expand_less' : 'expand_more' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  @if (expandedParticipant() === p.participant_id) {
+                    <div class="mt-4 pl-12 space-y-3 animate-fadeIn">
+                      @for (catEntry of getCategoryEntries(p); track catEntry[0]) {
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                          <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-sm">{{ catEntry[0] }}</span>
+                            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                              Peso: {{ (catEntry[1].weight * 100).toFixed(0) }}%
+                            </span>
+                          </div>
+                          <div class="text-xs text-gray-600 mb-1">
+                            {{ catEntry[1].correct }}/{{ catEntry[1].total }} correctas ({{ catEntry[1].score }}%)
+                          </div>
+                          <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              [class]="getCategoryColor(catEntry[1].score)"
+                              [style.width.%]="catEntry[1].score"
+                              class="h-2 rounded-full transition-all"
+                            ></div>
+                          </div>
+                        </div>
+                      }
+                    </div>
                   }
+                </li>
+              }
+            </ul>
+          } @else {
+            <ul class="divide-y divide-[var(--color-border)] bg-[var(--color-bg-secondary)] rounded-xl shadow-inner mb-8">
+              @for (p of rankedParticipants(); track p.nickname; let i = $index) {
+                <li class="py-4 px-6 flex justify-between items-center">
+                  <div class="flex items-center gap-3">
+                    <span class="font-bold w-6 text-[var(--color-text)] text-center">
+                      {{ i + 1 }}.
+                    </span>
+                    <img
+                      [src]="p.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
+                      class="w-10 h-10 rounded-full border border-[var(--color-border)] shadow-sm"
+                    />
+                    <span class="font-semibold text-[var(--color-text)]">{{ p.nickname }}</span>
+                  </div>
+                  <span class="font-bold text-[var(--color-primary)]">
+                    {{ p.score || 0 }}
+                  </span>
+                </li>
+              }
+            </ul>
+          }
 
-                  <img
-                    [src]="p.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
-                    class="w-10 h-10 rounded-full border border-[var(--color-border)] shadow-sm"
-                    alt="avatar"
-                  />
-                  <span class="font-semibold text-[var(--color-text)]">{{ p.nickname }}</span>
-                </div>
-                <span class="font-bold text-[var(--color-primary)] text-lg">
-                  {{ p.score || 0 }} pts
-                </span>
-              </li>
-            }
-          </ul>
-
-
-          <div class="text-center flex flex-col sm:flex-row justify-center gap-4">
+          <div class="text-center mt-8 flex flex-col sm:flex-row justify-center gap-4">
             <button
               (click)="viewDetailedResults()"
-              class="bg-[var(--color-primary)] cursor-pointer hover:bg-[var(--color-primary-hover)] 
-                     text-white px-6 py-3 rounded-xl font-semibold shadow-md transition flex items-center justify-center gap-2"
+              class="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] 
+                     text-white px-6 py-3 rounded-xl font-semibold shadow-md transition cursor-pointer flex items-center justify-center gap-2"
             >
-              <span class="material-icons">insights</span>
-              Ver resultados detallados
+              <span class="material-icons">assessment</span>
+              Ver análisis completo
             </button>
 
             <button
               (click)="goHome()"
-              class="bg-[var(--color-success)] cursor-pointer hover:bg-green-600 
-                     text-white px-6 py-3 rounded-xl font-semibold shadow-md transition flex items-center justify-center gap-2"
+              class="bg-gray-600 hover:bg-gray-700 
+                     text-white px-6 py-3 rounded-xl font-semibold shadow-md transition cursor-pointer flex items-center justify-center gap-2"
             >
               <span class="material-icons">home</span>
-              Volver al inicio
+              Volver
             </button>
           </div>
         </div>
       }
-    </div>
-  } @else {
-    <!-- Estado de espera -->
-    <div class="text-center mt-20 text-[var(--color-text)] animate-pulse">
-      Esperando inicio del quiz...
     </div>
   }
 </section>

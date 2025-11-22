@@ -6,7 +6,8 @@ import {
   QuizSessionOut, 
   QuestionSessionOut,
   SessionListItem,
-  SessionAnalytics
+  SessionAnalytics,
+  TopsisRanking  // 🆕 NUEVO
 } from '../models/session.model';
 
 @Injectable({ providedIn: 'root' })
@@ -328,19 +329,19 @@ export class SessionService {
   /**
    * Lista sesiones del usuario autenticado (HOST)
    * @param quizId - Filtro opcional por quiz
-   * @param mode - Filtro opcional: "self" | "live"  // 🔄 CAMBIO AQUÍ
+   * @param mode - Filtro opcional: "self" | "live"
    * @param limit - Límite de resultados (default: 20)
    * @param offset - Paginación (default: 0)
    */
   async listSessions(
     quizId?: number,
-    mode?: string,  // 🔄 Cambiado de "status" a "mode"
+    mode?: string,
     limit = 20,
     offset = 0
   ): Promise<SessionListItem[]> {
     const params: any = { limit, offset };
     if (quizId) params.quiz_id = quizId;
-    if (mode) params.mode = mode;  // 🔄 Cambiado de "status" a "mode"
+    if (mode) params.mode = mode;
 
     return await this.http
       .get<SessionListItem[]>(this.apiUrl, { params })
@@ -357,5 +358,32 @@ export class SessionService {
     return await this.http
       .get<SessionAnalytics>(`${this.apiUrl}/${sessionId}/analytics`)
       .toPromise() as SessionAnalytics;
+  }
+
+  // =======================================================
+  // 🎯 MÉTODO NUEVO PARA TOPSIS
+  // =======================================================
+
+  /**
+   * Obtiene el ranking TOPSIS (ponderado por categorías).
+   * 
+   * Si el quiz NO tiene categorías → retorna { has_categories: false, ranking: [] }
+   * Si el quiz SÍ tiene categorías → retorna el ranking completo con scores TOPSIS
+   * 
+   * @param sessionId - ID de la sesión
+   * @returns TopsisRanking con información completa de desempeño por categoría
+   */
+  async fetchTopsisRanking(sessionId: number): Promise<TopsisRanking> {
+    try {
+      const result = await this.http
+        .get<TopsisRanking>(`${this.apiUrl}/${sessionId}/topsis-ranking`)
+        .toPromise();
+      
+      return result || { has_categories: false, ranking: [] };
+    } catch (err) {
+      console.error('❌ Error obteniendo ranking TOPSIS:', err);
+      // En caso de error, retornar estructura vacía
+      return { has_categories: false, ranking: [] };
+    }
   }
 }
