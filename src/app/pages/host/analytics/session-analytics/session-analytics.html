@@ -46,7 +46,7 @@
 
   <!-- Error -->
   @if (error() && !loading()) {
-    <div class="p-4 border border-[var(--color-border)] rounded-xl text-[var(--color-danger)] bg-[var(--color-bg-secondary)]">
+    <div class="p-4 border border-[var(--color-border)] rounded-xl text-[var(--color-danger)] bg-red-50 dark:bg-red-900/20">
       {{ error() }}
     </div>
   }
@@ -157,7 +157,7 @@
                                     <span class="font-semibold text-sm text-[var(--color-text)]">
                                       {{ catEntry[0] }}
                                     </span>
-                                    <span class="text-xs bg-[var(--color-primary)] bg-opacity-10 text-[var(--color-primary)] px-2 py-1 rounded">
+                                    <span class="text-xs bg-[var(--color-primary)] text-white px-2 py-1 rounded font-medium">
                                       Peso: {{ (catEntry[1].weight * 100).toFixed(0) }}%
                                     </span>
                                   </div>
