@@ -74,6 +74,7 @@
         }
 
         <div class="flex justify-center gap-3 mt-6">
+          <!-- 1️⃣ BOTÓN ENVIAR RESPUESTA -->
           @if (!isSubmitted() && !showFeedback()) {
             <button
               (click)="submitAnswer()"
@@ -87,11 +88,24 @@
             </button>
           }
 
-          @if (isSubmitted() && !showFeedback()) {
+          <!-- 2️⃣ MENSAJE RESPUESTA ENVIADA (solo en modo live) -->
+          @if (isSubmitted() && !showFeedback() && !isSelfStudy()) {
             <div class="flex items-center gap-2 text-[var(--color-success)] font-semibold">
               <span class="material-icons">check_circle</span>
               <span>Respuesta enviada</span>
             </div>
+          }
+
+          <!-- 🆕 3️⃣ BOTÓN TERMINAR PREGUNTA (solo autoestudio) -->
+          @if (isSelfStudy() && allowFinishQuestion() && !showFeedback()) {
+            <button
+              (click)="finishQuestionSelfStudy()"
+              class="bg-[var(--color-danger)] hover:bg-red-600 text-white px-8 py-3 
+                     rounded-xl font-semibold shadow-md transition cursor-pointer flex items-center gap-2"
+            >
+              <span class="material-icons">stop_circle</span>
+              Terminar pregunta
+            </button>
           }
         </div>
 
@@ -116,13 +130,15 @@
           </div>
         }
 
+        <!-- 4️⃣ BOTÓN SIGUIENTE PREGUNTA (solo autoestudio, después del feedback) -->
         @if (isSelfStudy() && showFeedback() && showNextButton()) {
           <div class="flex justify-center mt-8">
             <button
               (click)="nextQuestion()"
               class="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]
-                      text-white px-8 py-3 rounded-xl font-semibold shadow-md transition cursor-pointer"
+                      text-white px-8 py-3 rounded-xl font-semibold shadow-md transition cursor-pointer flex items-center gap-2"
             >
+              <span class="material-icons">arrow_forward</span>
               Siguiente pregunta
             </button>
           </div>

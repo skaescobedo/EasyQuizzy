@@ -144,11 +144,21 @@ export class SessionPlayComponent {
 
         if (newTime <= 0) {
           clearInterval((this as any)._interval);
-          this.autoSubmitIfNeeded();
+          
+          // 🔥 SI ES AUTOESTUDIO → AUTO-FINALIZAR PREGUNTA
+          if (this.isSelfStudy()) {
+            this.autoSubmitIfNeeded();     // enviar respuesta (aunque sea null)
+            this.showFeedback.set(true);   // mostrar corrección
+            this.showNextButton.set(true); // permitir avanzar
+            this.allowFinishQuestion.set(false);
+          } else {
+            this.autoSubmitIfNeeded();
+          }
         }
       }, 1000);
     } else {
       this.timeLeft.set(0);
+      // ⏰ Sin tiempo límite en autoestudio → permitir terminar manualmente
       if (this.isSelfStudy()) {
         this.allowFinishQuestion.set(true);
       }
@@ -160,10 +170,14 @@ export class SessionPlayComponent {
     this.selectedAnswer.set(answerId);
   }
 
+  // ✅ RESTAURADO: Método submit() para el botón "Enviar respuesta"
   submitAnswer() {
+    if (this.isSubmitted()) return;
+    
     const q = this.currentQuestion();
     if (!q) return;
 
+    // Validación según tipo de pregunta
     if (q.question_type === "short_answer" && !this.shortAnswer.trim()) {
       return;
     }
@@ -172,27 +186,27 @@ export class SessionPlayComponent {
       return;
     }
 
-    this.isSubmitted.set(true);
+    // Enviar respuesta
+    this.autoSubmitIfNeeded();
+    
+    // 🔥 SI ES AUTOESTUDIO → mostrar botón "Terminar pregunta"
+    if (this.isSelfStudy()) {
+      this.allowFinishQuestion.set(true);
+    }
+  }
+
+  autoSubmitIfNeeded() {
+    if (this.isSubmitted()) return;
+
+    const q = this.currentQuestion();
+    if (!q) return;
 
     const responseTime = Date.now() - this.startTime;
     const answerId = this.selectedAnswer();
     const shortAns = this.shortAnswer.trim() || undefined;
 
     this.session.submitAnswer(q.question_id, answerId, responseTime, shortAns);
-  }
-
-  autoSubmitIfNeeded() {
-    if (!this.isSubmitted()) {
-      const q = this.currentQuestion();
-      if (!q) return;
-
-      const responseTime = Date.now() - this.startTime;
-      const answerId = this.selectedAnswer();
-      const shortAns = this.shortAnswer.trim() || undefined;
-
-      this.session.submitAnswer(q.question_id, answerId, responseTime, shortAns);
-      this.isSubmitted.set(true);
-    }
+    this.isSubmitted.set(true);
   }
 
   isCorrect(answerId: number): boolean {
@@ -252,17 +266,20 @@ export class SessionPlayComponent {
     this.session.disconnect();
   }
 
+  // ✅ RESTAURADO: Terminar pregunta manualmente en autoestudio
   finishQuestionSelfStudy() {
     if (!this.isSelfStudy()) return;
 
+    // Detener el temporizador
     clearInterval((this as any)._interval);
     this.timeLeft.set(0);
 
-    this.autoSubmitIfNeeded();
+    this.autoSubmitIfNeeded();  // asegúrate que mande respuesta si no lo hizo
 
     this.showFeedback.set(true);
     this.allowFinishQuestion.set(false);
 
+    // Mostrar botón para pasar a la siguiente
     this.showNextButton.set(true);
   }
 
