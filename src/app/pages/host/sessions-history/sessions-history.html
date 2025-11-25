@@ -101,7 +101,7 @@
                 </span>
                 <span class="inline-flex items-center gap-1">
                   <mat-icon fontIcon="calendar_today" class="text-base"></mat-icon>
-                  {{ session.created_at | date: 'short' }}
+                  {{ session.created_at  + 'Z' | date: 'short' }}
                 </span>
               </div>
             </div>
