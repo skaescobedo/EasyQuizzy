@@ -111,6 +111,13 @@
                           <span class="text-sm font-medium text-[var(--color-text)]">
                             {{ p.nickname }}
                           </span>
+
+                          @if (isCheater(p.participant_id)) {
+                            <span class="flex items-center gap-1 text-xs text-red-600 font-semibold">
+                              <mat-icon fontIcon="warning" class="text-red-600 text-base"></mat-icon>
+                              Sospechoso de trampa
+                            </span>
+                          }
                         </div>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
@@ -189,6 +196,33 @@
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      }
+
+
+      <!-- ⚠️ Panel de razones de trampa -->
+      @if (cheaters().length > 0) {
+        <div class="mt-6 p-4 border border-red-300 bg-red-50 dark:bg-red-700/20 rounded-xl">
+          <h3 class="text-lg font-semibold text-red-700 flex items-center gap-2 mb-3">
+            <mat-icon fontIcon="warning" class="text-red-700"></mat-icon>
+            Posibles trampas detectadas
+          </h3>
+
+          <div class="space-y-4">
+            @for (c of cheaters(); track c.participant_id) {
+              <div class="p-3 bg-white/70 dark:bg-white/10 rounded-lg border border-red-200 dark:border-red-700">
+                <div class="font-bold text-red-600 mb-1">
+                  {{ c.nickname }} — score: {{ c.anomaly_score | number:'1.2-2' }}
+                </div>
+
+                <ul class="list-disc ml-5 text-sm text-[var(--color-text)]">
+                  @for (reason of c.reasons; track reason) {
+                    <li>{{ reason }}</li>
+                  }
+                </ul>
+              </div>
+            }
           </div>
         </div>
       }

@@ -386,4 +386,11 @@ export class SessionService {
       return { has_categories: false, ranking: [] };
     }
   }
+
+  // session.service.ts
+  async fetchAnomalyDetection(sessionId: number) {
+    return await this.http
+      .get<any>(`${this.apiUrl}/${sessionId}/anomaly-detection`)
+      .toPromise();
+  }
 }

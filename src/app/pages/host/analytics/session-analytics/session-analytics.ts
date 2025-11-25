@@ -30,6 +30,7 @@ export class SessionAnalyticsComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   sessionId = signal<number | null>(null);
+  cheaters = signal<any[]>([]);
 
   // 🎯 NUEVO: Signals para TOPSIS
   topsisData = signal<TopsisRanking | null>(null);
@@ -65,11 +66,25 @@ export class SessionAnalyticsComponent implements OnInit {
         console.warn('No se pudo cargar TOPSIS:', err);
       }
 
+      try {
+        const cheatData = await this.sessionService.fetchAnomalyDetection(sessionId);
+        this.cheaters.set(cheatData.suspects || []);
+      } catch (err) {
+        console.warn("No se pudo cargar anomalías:", err);
+      }
     } catch (err: any) {
       this.error.set(err?.error?.detail || 'Error al cargar analytics');
     } finally {
       this.loading.set(false);
     }
+  }
+
+  isCheater(participantId: number): boolean {
+    return this.cheaters().some(c => c.participant_id === participantId);
+  }
+
+  cheaterReasons(participantId: number): string[] {
+    return this.cheaters().find(c => c.participant_id === participantId)?.reasons || [];
   }
 
   goBack() {
