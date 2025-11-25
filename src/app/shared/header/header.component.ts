@@ -28,7 +28,7 @@ import { SidebarComponent } from "../sidebar/sidebar.component";
           }
 
           <a routerLink="/" class="flex items-center gap-2">
-            <img src="assets/logo-no-bg.png" alt="EasyQuizzy" class="h-8 md:h-10" />
+            <img src="assets/logo-no-bg.png" alt="EasyQuizzy" class="h-8 md:h-10 logo-invert" />
           </a>
         </div>
 

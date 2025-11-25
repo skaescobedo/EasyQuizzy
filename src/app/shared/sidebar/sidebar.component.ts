@@ -62,15 +62,6 @@ import { AuthService } from '../../services/auth.service';
                 Analíticas
               </a>
             </li>
-            <li>
-              <a
-                routerLink="/host/profile"
-                [class.active]="isActive('/host/profile')"
-              >
-                <mat-icon fontIcon="person"></mat-icon>
-                Mi perfil
-              </a>
-            </li>
           </ul>
         </nav>
 

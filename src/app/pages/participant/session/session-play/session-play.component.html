@@ -61,7 +61,7 @@
                 [class.ring-2]="selectedAnswer() === ans.answer_id"
                 [class.ring-[var(--color-primary)]]="selectedAnswer() === ans.answer_id && !showFeedback()"
                 [class.bg-green-500]="showFeedback() && isCorrect(ans.answer_id)"
-                [class.text-white]="showFeedback() && isCorrect(ans.answer_id)"
+                [class.text-white]="(showFeedback() && isCorrect(ans.answer_id)) || (showFeedback() && selectedAnswer() === ans.answer_id && !isCorrect(ans.answer_id))"
                 [class.bg-red-500]="showFeedback() && selectedAnswer() === ans.answer_id && !isCorrect(ans.answer_id)"
                 class="p-4 text-lg font-medium rounded-xl border-2 transition-all duration-200
                        hover:scale-105 disabled:cursor-not-allowed

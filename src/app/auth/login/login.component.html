@@ -28,10 +28,6 @@
         <h2 class="mb-6">Bienvenido de nuevo</h2>
         <p class="subtitle">Inicia sesión en tu cuenta de EasyQuizzy</p>
 
-        @if (errorMessage()) {
-          <app-error [message]="errorMessage() | errorMessage"></app-error>
-        }
-
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="mt-4 space-y-3">
           <!-- Email -->
           <div>
@@ -74,8 +70,11 @@
             </a>
           </div>
 
+          @if (errorMessage()) {
+            <app-error [message]="errorMessage() | errorMessage"></app-error>
+          }
           <!-- Botón principal -->
-          <button type="submit" class="btn btn--primary mt-2 w-full" [disabled]="loading()">
+          <button type="submit" class="btn btn--primary mt-4 w-full" [disabled]="loading()">
             @if (loading()) {
               <span>Cargando...</span>
             } @else {
