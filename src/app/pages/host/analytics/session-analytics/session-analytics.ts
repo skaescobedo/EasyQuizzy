@@ -179,8 +179,8 @@ export class SessionAnalyticsComponent implements OnInit {
     //  🏆 3. Ranking SAW/TOPSIS
     // =============================
     if (topsis?.ranking?.length) {
-      csv.push("RANKING GENERAL SAW / TOPSIS");
-      csv.push("Posición,Participante,Puntaje bruto,Puntaje de topsis,Total de correctas");
+      csv.push("RANKING GENERAL SAW");
+      csv.push("Posición,Participante,Puntaje bruto,Puntaje de SAW,Total de correctas");
 
       for (const p of topsis.ranking) {
 
