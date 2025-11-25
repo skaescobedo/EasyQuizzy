@@ -14,7 +14,6 @@ import { InsightsPanelComponent } from '../insights-panel/insights-panel';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
-    RouterLink,
     MatIconModule,
     GlobalStatsCardComponent,
     QuestionAnalyticsItemComponent,
@@ -77,10 +76,6 @@ export class SessionAnalyticsComponent implements OnInit {
     this.router.navigate(['/host/sessions']);
   }
 
-  exportCSV() {
-    alert('🚧 Exportar a CSV - Por implementar');
-  }
-
   // 🎯 NUEVO: Métodos para TOPSIS
   
   toggleParticipantDetails(participantId: number) {
@@ -106,4 +101,160 @@ export class SessionAnalyticsComponent implements OnInit {
     if (score >= 60) return 'text-yellow-600';
     return 'text-red-600';
   }
+
+  exportCSV() {
+    const analytics = this.analytics();
+    const topsis = this.topsisData();
+
+    if (!analytics) {
+      alert("No hay datos para exportar");
+      return;
+    }
+
+    let csv = [];
+
+    // =============================
+    //  🧩 1. Información general
+    // =============================
+    csv.push("INFORMACIÓN GENERAL");
+    csv.push(`Título del quiz,${analytics.session_info.quiz_title}`);
+    csv.push(`Código,${analytics.session_info.code}`);
+    csv.push(`Modo,${analytics.session_info.mode}`);
+    csv.push(`Craeado en,${analytics.session_info.created_at || 'N/A'}`);
+    csv.push("");
+
+    // =============================
+    //  📊 2. Estadísticas globales
+    // =============================
+    const gs = analytics.global_stats;
+
+    csv.push("ESTADÍSTICAS GLOBALES");
+
+    // Encabezados en español
+    csv.push([
+      "Total de participantes",
+      "Promedio de puntaje",
+      "Mediana de puntaje",
+      "Puntaje más alto",
+      "Puntaje más bajo",
+      "Exactitud global (%)",
+      "Tiempo promedio de respuesta (ms)",
+      "Total de respuestas",
+      "Respuestas correctas",
+      "Respuestas incorrectas"
+    ].join(","));
+
+    // Valores
+    csv.push([
+      gs.total_participants,
+      gs.avg_score,
+      gs.median_score,
+      gs.highest_score,
+      gs.lowest_score,
+      gs.overall_accuracy,
+      gs.avg_response_time_ms,
+      gs.total_responses,
+      gs.correct_responses,
+      gs.incorrect_responses
+    ].join(","));
+
+    csv.push("");
+
+    // =============================
+    //  🏆 3. Ranking SAW/TOPSIS
+    // =============================
+    if (topsis?.ranking?.length) {
+      csv.push("RANKING GENERAL SAW / TOPSIS");
+      csv.push("Posición,Participante,Puntaje bruto,Puntaje de topsis,Total de correctas");
+
+      for (const p of topsis.ranking) {
+
+        // Sumar correctas de todas las categorías
+        const totalCorrectas = Object.values(p.category_performance)
+          .reduce((sum, cat) => sum + cat.correct, 0);
+
+        csv.push([
+          p.topsis_rank,
+          `"${p.nickname}"`,
+          p.raw_score,
+          p.topsis_score,
+          totalCorrectas
+        ].join(","));
+      }
+
+      csv.push("");
+
+        // =============================
+        // 🧩 Ranking detallado por categoría
+        // =============================
+        csv.push("RANKING POR CATEGORÍA (SAW )");
+        csv.push("Posición,Participante,Categoría,Puntaje de categoría,Peso de categoría,Preguntas Correctas,Total de Preguntas");
+
+        for (const p of topsis.ranking) {
+          const categories = Object.entries(p.category_performance);
+
+          for (const [categoria, cat] of categories) {
+            csv.push([
+              p.topsis_rank,
+              `"${p.nickname}"`,
+              `"${categoria}"`,
+              cat.score,
+              cat.weight,
+              cat.correct,
+              cat.total
+            ].join(","));
+          }
+        }
+
+        csv.push("");
+    }
+
+    // =============================
+    //  ❓ 4. Analytics por pregunta
+    // =============================
+    csv.push("ANALITICAS POR PREGUNTA");
+
+    csv.push([
+      "Numero de pregunta",
+      "Texto de pregunta",
+      "Respuestas correctas",
+      "Respuestas incorrectas",
+      "Sin respuesta",
+      "Tasa de aciertos",
+      "Tiempo promedio de respuesta (ms)"
+    ].join(","));
+
+    for (const q of analytics.question_analytics) {
+      csv.push([
+        q.order_index,
+        `"${q.question_text.replace(/"/g, '""')}"`,
+        q.correct_count,
+        q.incorrect_count,
+        q.no_response_count,
+        q.accuracy_rate,
+        q.avg_response_time_ms
+      ].join(","));
+    }
+
+    csv.push("");
+
+    // =============================
+    //  📥  Descargar archivo
+    // =============================
+    const BOM = "\ufeff"; // ← BOM UTF-8 requerido para Excel
+
+    const blob = new Blob(
+      [BOM + csv.join("\n")], // ← prepend BOM
+      { type: "text/csv;charset=utf-8;" }
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = `Analíticas_${analytics.session_info.quiz_title}.csv`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }
+
 }

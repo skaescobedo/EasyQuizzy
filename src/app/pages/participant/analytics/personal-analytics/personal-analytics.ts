@@ -9,7 +9,7 @@ import { SessionAnalytics, TopsisRanking, TopsisParticipant } from '../../../../
   selector: 'app-personal-analytics',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterLink, MatIconModule],
+  imports: [CommonModule, MatIconModule],
   templateUrl: './personal-analytics.html',
 })
 export class PersonalAnalyticsComponent implements OnInit {
