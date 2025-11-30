@@ -1,7 +1,8 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:8000',
-  wsUrl: 'ws://localhost:8000',
-  domainUrl: 'http://easyquizzy.com',
+  apiUrl: 'https://easyquizzyapi.up.railway.app',
+  wsUrl: 'wss://easyquizzyapi.up.railway.app',
+  // aquí va el dominio donde publiques el Angular (por ejemplo en Vercel, Netlify, etc.)
+  domainUrl: 'https://TU-DOMINIO-FRONTEND.com',
   googleClientId: '766266417315-vracakdph9p31q09is106lrk0k19plcp.apps.googleusercontent.com'
 };
