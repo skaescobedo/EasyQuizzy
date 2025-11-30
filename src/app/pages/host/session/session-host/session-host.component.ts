@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { QRCodeComponent } from 'angularx-qrcode';
 import { SessionService } from '../../../../services/session.service';
-import { environment } from '../../../../../environment/environment';
+import { environment } from '../../../../../environments/environment';
 import { ToastrService } from 'ngx-toastr';
 
 declare const navigator: Navigator;

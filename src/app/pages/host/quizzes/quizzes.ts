@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { QuizService, QuizListItem } from '../../../services/quiz.service';
 import { QuizCard } from './quiz-card/quiz-card';
-import { environment } from '../../../../environment/environment';
+import { environment } from '../../../../environments/environment';
 import { Router } from '@angular/router';
 import { SessionService } from '../../../services/session.service';
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AuthService } from './auth.service';
 import { Router } from '@angular/router';
-import { environment } from '../../environment/environment';
+import { environment } from '../../environments/environment';
 
 declare const google: any;
 
