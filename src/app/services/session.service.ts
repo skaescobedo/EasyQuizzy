@@ -45,6 +45,7 @@ export class SessionService {
     this.code.set(session.code);
     this.quizTitle.set(session.name);
     this.participants.set([]);
+    this.currentQuestionIndex.set(0);
 
     this.connectAsHost(session.session_id);
     return session;
